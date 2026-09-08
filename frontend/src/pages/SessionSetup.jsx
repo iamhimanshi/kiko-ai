@@ -1,180 +1,158 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Plus, X } from 'lucide-react'
-import AppLayout from '../layouts/AppLayout'
-import * as sessionsApi from '../services/sessionsApi'
-
-const SUBJECTS = ['DSA', 'DBMS', 'Operating Systems', 'Web Development', 'Programming Practice', 'Exam Preparation', 'Other']
-const DURATION_PRESETS = [25, 45, 60, 90]
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Plus, X, Clock, Target, BookOpen, CheckCircle } from 'lucide-react';
 
 export default function SessionSetup() {
-  const navigate = useNavigate()
-  const [goal, setGoal] = useState('')
-  const [subject, setSubject] = useState(SUBJECTS[0])
-  const [durationMinutes, setDurationMinutes] = useState(45)
-  const [customDuration, setCustomDuration] = useState('')
-  const [useCustom, setUseCustom] = useState(false)
-  const [tasks, setTasks] = useState([])
-  const [taskInput, setTaskInput] = useState('')
-  const [error, setError] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    subject: '',
+    goal: '',
+    duration: 60,
+    tasks: [''],
+  });
 
-  function addTask() {
-    const text = taskInput.trim()
-    if (!text) return
-    setTasks((prev) => [...prev, text])
-    setTaskInput('')
-  }
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-  function removeTask(index) {
-    setTasks((prev) => prev.filter((_, i) => i !== index))
-  }
+  const handleTaskChange = (index, value) => {
+    const newTasks = [...formData.tasks];
+    newTasks[index] = value;
+    setFormData({ ...formData, tasks: newTasks });
+  };
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
+  const addTask = () => {
+    setFormData({ ...formData, tasks: [...formData.tasks, ''] });
+  };
 
-    if (!goal.trim()) {
-      setError('Study goal is required.')
-      return
-    }
-    const minutes = useCustom ? Number(customDuration) : durationMinutes
-    if (!minutes || minutes < 1) {
-      setError('Enter a valid duration.')
-      return
-    }
+  const removeTask = (index) => {
+    const newTasks = formData.tasks.filter((_, i) => i !== index);
+    setFormData({ ...formData, tasks: newTasks });
+  };
 
-    setSubmitting(true)
-    try {
-      const session = await sessionsApi.createSession({
-        subject,
-        goal: goal.trim(),
-        plannedDurationSeconds: minutes * 60,
-        tasks,
-      })
-      navigate(`/session/${session.id}`, { replace: true })
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Could not start the session. Try again.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // TODO: Call API to create session
+    navigate('/study-session/active');
+  };
 
   return (
-    <AppLayout title="Start a Study Session">
-      <form onSubmit={handleSubmit} className="max-w-2xl">
-        <div className="mb-8">
-          <label className="block text-sm font-medium text-ink mb-2" htmlFor="goal">
-            What do you want to accomplish?
-          </label>
-          <textarea
-            id="goal"
-            required
-            rows={2}
-            value={goal}
-            onChange={(e) => setGoal(e.target.value)}
-            placeholder="e.g. Complete Linked List implementation"
-            className="w-full bg-card border border-border rounded px-4 py-3 text-ink placeholder:text-subtle outline-none focus:border-brand-light transition-colors resize-none"
-          />
-        </div>
+    <div className="min-h-screen bg-bg-cream">
+      <div className="max-w-2xl mx-auto p-8">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2 text-text-muted hover:text-primary transition mb-6"
+        >
+          <ArrowLeft size={18} />
+          Back to Dashboard
+        </button>
 
-        <div className="mb-8">
-          <label className="block text-sm font-medium text-ink mb-2" htmlFor="subject">Subject</label>
-          <select
-            id="subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            className="w-full sm:w-64 bg-card border border-border rounded px-4 py-3 text-ink outline-none focus:border-brand-light transition-colors"
-          >
-            {SUBJECTS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
+        <div className="card p-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+              <Target className="text-white" size={20} />
+            </div>
+            <h1 className="text-2xl font-bold text-text-dark">Start a Study Session</h1>
+          </div>
+          <p className="text-text-slate mb-6">Set your goal and focus on what matters.</p>
 
-        <div className="mb-8">
-          <p className="block text-sm font-medium text-ink mb-2">Duration</p>
-          <div className="flex flex-wrap gap-2">
-            {DURATION_PRESETS.map((m) => (
+          <form onSubmit={handleSubmit}>
+            <div className="mb-5">
+              <label className="block text-text-slate text-sm font-medium mb-1.5">Subject</label>
+              <div className="relative">
+                <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder" size={18} />
+                <input
+                  type="text"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  className="input-field pl-11"
+                  placeholder="e.g., Data Structures & Algorithms"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-text-slate text-sm font-medium mb-1.5">Study Goal</label>
+              <div className="relative">
+                <Target className="absolute left-4 top-4 text-text-placeholder" size={18} />
+                <input
+                  type="text"
+                  name="goal"
+                  value={formData.goal}
+                  onChange={handleChange}
+                  className="input-field pl-11"
+                  placeholder="e.g., Study Linked Lists and solve 5 problems"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-text-slate text-sm font-medium mb-1.5">Duration</label>
+              <div className="relative">
+                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder" size={18} />
+                <select
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleChange}
+                  className="input-field pl-11 appearance-none"
+                >
+                  <option value={15}>15 minutes</option>
+                  <option value={30}>30 minutes</option>
+                  <option value={45}>45 minutes</option>
+                  <option value={60}>60 minutes</option>
+                  <option value={90}>90 minutes</option>
+                  <option value={120}>120 minutes</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-text-slate text-sm font-medium mb-1.5">Tasks</label>
+              {formData.tasks.map((task, index) => (
+                <div key={index} className="flex items-center gap-2 mb-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={task}
+                      onChange={(e) => handleTaskChange(index, e.target.value)}
+                      className="input-field pl-4"
+                      placeholder={`Task ${index + 1}`}
+                    />
+                  </div>
+                  {formData.tasks.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeTask(index)}
+                      className="text-text-muted hover:text-status-error p-2 rounded-lg transition"
+                    >
+                      <X size={18} />
+                    </button>
+                  )}
+                </div>
+              ))}
               <button
                 type="button"
-                key={m}
-                onClick={() => { setDurationMinutes(m); setUseCustom(false) }}
-                className={`px-4 py-2 rounded text-sm border transition-colors ${
-                  !useCustom && durationMinutes === m
-                    ? 'border-brand bg-brand-soft text-brand-light'
-                    : 'border-border text-muted hover:text-ink'
-                }`}
+                onClick={addTask}
+                className="text-primary hover:text-primary-hover text-sm font-medium transition flex items-center gap-1"
               >
-                {m} min
+                <Plus size={16} />
+                Add Task
               </button>
-            ))}
+            </div>
+
             <button
-              type="button"
-              onClick={() => setUseCustom(true)}
-              className={`px-4 py-2 rounded text-sm border transition-colors ${
-                useCustom ? 'border-brand bg-brand-soft text-brand-light' : 'border-border text-muted hover:text-ink'
-              }`}
+              type="submit"
+              className="btn-primary w-full flex items-center justify-center gap-2 text-base py-3"
             >
-              Custom
+              <CheckCircle size={18} />
+              Start Session
             </button>
-            {useCustom && (
-              <input
-                type="number"
-                min={1}
-                max={360}
-                autoFocus
-                value={customDuration}
-                onChange={(e) => setCustomDuration(e.target.value)}
-                placeholder="minutes"
-                className="w-28 bg-card border border-border rounded px-3 py-2 text-sm text-ink outline-none focus:border-brand-light"
-              />
-            )}
-          </div>
+          </form>
         </div>
-
-        <div className="mb-8">
-          <p className="block text-sm font-medium text-ink mb-2">Study tasks <span className="text-subtle font-normal">(optional)</span></p>
-          <div className="flex gap-2 mb-3">
-            <input
-              value={taskInput}
-              onChange={(e) => setTaskInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTask() } }}
-              placeholder="e.g. Implement insertion"
-              className="flex-1 bg-card border border-border rounded px-4 py-2.5 text-sm text-ink placeholder:text-subtle outline-none focus:border-brand-light"
-            />
-            <button
-              type="button"
-              onClick={addTask}
-              className="px-3 rounded border border-border text-muted hover:text-ink hover:border-brand-light transition-colors"
-            >
-              <Plus size={16} />
-            </button>
-          </div>
-          {tasks.length > 0 && (
-            <ul className="space-y-1.5">
-              {tasks.map((t, i) => (
-                <li key={i} className="flex items-center justify-between bg-card border border-border rounded px-3 py-2 text-sm text-ink">
-                  {t}
-                  <button type="button" onClick={() => removeTask(i)} className="text-subtle hover:text-danger transition-colors">
-                    <X size={14} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {error && <p className="text-sm text-danger mb-4" role="alert">⚠ {error}</p>}
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="bg-brand text-white font-medium px-6 py-3 rounded hover:bg-brand-dark transition disabled:opacity-60"
-        >
-          {submitting ? 'Starting…' : 'Start Study Session'}
-        </button>
-      </form>
-    </AppLayout>
-  )
+      </div>
+    </div>
+  );
 }

@@ -1,76 +1,95 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import * as authApi from '../services/authApi'
+import { createContext, useState, useContext, useEffect } from 'react';
+import { authApi } from '../services/api';
 
-const AuthContext = createContext(null)
+const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem('kiko_user')
-    return stored ? JSON.parse(stored) : null
-  })
-  const [loading, setLoading] = useState(true)
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(localStorage.getItem('access_token'));
 
   useEffect(() => {
-    const token = localStorage.getItem('kiko_token')
-    if (!token) {
-      setLoading(false)
-      return
+    if (token) {
+      loadUser();
+    } else {
+      setLoading(false);
     }
-    authApi
-      .fetchMe()
-      .then((data) => {
-        setUser(data)
-        localStorage.setItem('kiko_user', JSON.stringify(data))
-      })
-      .catch(() => {
-        localStorage.removeItem('kiko_token')
-        localStorage.removeItem('kiko_user')
-        setUser(null)
-      })
-      .finally(() => setLoading(false))
-  }, [])
+  }, []);
 
-  const doLogin = useCallback(async (email, password) => {
-    const data = await authApi.login({ email, password })
-    localStorage.setItem('kiko_token', data.access_token)
-    localStorage.setItem('kiko_user', JSON.stringify(data.user))
-    setUser(data.user)
-    return data.user
-  }, [])
-
-  const doSignup = useCallback(async (name, email, password) => {
-    await authApi.signup({ name, email, password })
-    return doLogin(email, password)
-  }, [doLogin])
-
-  const doStartDemo = useCallback(async () => {
-    const data = await authApi.startDemo()
-    localStorage.setItem('kiko_token', data.access_token)
-    localStorage.setItem('kiko_user', JSON.stringify(data.user))
-    setUser(data.user)
-    return data.user
-  }, [])
-
-  const doLogout = useCallback(async () => {
+  const loadUser = async () => {
     try {
-      await authApi.logout()
-    } catch {
-      // token may already be invalid/expired — clear local state regardless
+      const response = await authApi.getMe();
+      setUser(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to load user:', error);
+      logout();
+      return null;
+    } finally {
+      setLoading(false);
     }
-    localStorage.removeItem('kiko_token')
-    localStorage.removeItem('kiko_user')
-    setUser(null)
-  }, [])
+  };
+
+  const login = async (email, password) => {
+    try {
+      const response = await authApi.login({ email, password });
+      const { access_token } = response.data;
+      localStorage.setItem('access_token', access_token);
+      setToken(access_token);
+      const userData = await loadUser();
+      return { success: true, user: userData };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.detail || 'Login failed',
+      };
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      // Step 1: Register
+      await authApi.register(userData);
+      
+      // Step 2: Auto-login
+      const loginResponse = await authApi.login({ 
+        email: userData.email, 
+        password: userData.password 
+      });
+      
+      const { access_token } = loginResponse.data;
+      localStorage.setItem('access_token', access_token);
+      setToken(access_token);
+      
+      // Step 3: Load user
+      const userDataLoaded = await loadUser();
+      
+      return { success: true, user: userDataLoaded };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.detail || 'Registration failed',
+      };
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('access_token');
+    setToken(null);
+    setUser(null);
+  };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login: doLogin, signup: doSignup, logout: doLogout, startDemo: doStartDemo }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};
 
-export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
-}
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+};

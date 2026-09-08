@@ -3,28 +3,30 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    color-scheme: dark;
-  }
   body {
-    background-color: #0B0F1A;
-  }
-  ::selection {
-    background-color: #5EEAD4;
-    color: #0B0F1A;
-  }
-  :focus-visible {
-    outline: 2px solid #5EEAD4;
-    outline-offset: 2px;
+    @apply bg-[#F8F7F2] text-[#1F2937] antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 }
 
-@layer utilities {
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
+@layer components {
+  .card {
+    @apply bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 transition-shadow hover:shadow-[0px_8px_24px_rgba(16,24,40,0.10)];
   }
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: #2A3350;
-    border-radius: 9999px;
+
+  .btn-primary {
+    @apply bg-[#1B4332] text-white px-6 py-2.5 rounded-[14px] font-medium transition-all hover:bg-[#24543F] active:bg-[#163426];
+  }
+
+  .btn-secondary {
+    @apply bg-white border border-[#E8ECE7] text-[#1B4332] px-6 py-2.5 rounded-[14px] font-medium transition-all hover:bg-[#EDF4EE];
+  }
+
+  .btn-gold {
+    @apply bg-[#D4A64A] text-white px-6 py-2.5 rounded-[14px] font-medium transition-all hover:bg-[#C9962E];
+  }
+
+  .input-field {
+    @apply w-full bg-white border border-[#E8ECE7] rounded-[14px] px-4 py-3 text-[#1F2937] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] transition-all;
   }
 }
