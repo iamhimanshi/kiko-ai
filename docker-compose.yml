@@ -1,32 +1,37 @@
 services:
-  mongodb:
-    image: mongo:7
-    container_name: kiko-mongodb
+  postgres:
+    image: postgres:15-alpine
+    container_name: kiko-postgres
     restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "5432:5432"
     environment:
-      MONGO_INITDB_DATABASE: kiko_ai
+      POSTGRES_USER: kiko_user
+      POSTGRES_PASSWORD: kiko_password
+      POSTGRES_DB: kiko_db
     volumes:
-      - kiko_mongo_data:/data/db
+      - kiko_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD-SHELL", "pg_isready -U kiko_user"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  mongo-express:
-    image: mongo-express:1.0
-    container_name: kiko-mongo-express
+  backend:
+    build: ./backend
+    container_name: kiko-backend
     restart: unless-stopped
     depends_on:
-      mongodb:
+      postgres:
         condition: service_healthy
     ports:
-      - "8081:8081"
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
     environment:
-      ME_CONFIG_MONGODB_SERVER: mongodb
-      ME_CONFIG_BASICAUTH: "false"
+      DATABASE_URL: postgresql://kiko_user:kiko_password@postgres:5432/kiko_db
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 volumes:
-  kiko_mongo_data:
+  kiko_postgres_data:
+  

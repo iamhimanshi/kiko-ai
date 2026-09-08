@@ -1,34 +1,29 @@
-"""
-KIKO AI backend entrypoint.
-
-Old prototype: one 620-line app.py with everything inline and
-`allow_origins=["*"]`.
-
-New: modular routers, CORS restricted to configured origins, DB
-connection managed via lifespan events, embedding model warmed up
-once at startup (same as before, just moved out of module import time).
-"""
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.database import close_mongo_connection, connect_to_mongo
-from app.routers import assistant, auth, documents, sessions
-from app.services.rag_service import get_embedding_model
+from app.core.database import engine, Base
+from app.routers import auth, documents, assistant, sessions
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    connect_to_mongo()
-    get_embedding_model()  # warm up the sentence-transformer once, at boot
+    # Create tables
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield
-    close_mongo_connection()
+    await engine.dispose()
 
 
-app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
+app = FastAPI(
+    title=settings.APP_NAME,
+    lifespan=lifespan,
+    version="1.0.0"
+)
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
@@ -37,13 +32,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Routes
 app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(assistant.router)
 app.include_router(sessions.router)
-app.include_router(sessions.dashboard_router)
 
 
 @app.get("/")
-def root():
+async def root():
     return {"message": f"{settings.APP_NAME} API", "status": "running"}
+
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}

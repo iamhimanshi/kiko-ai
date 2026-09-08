@@ -1,17 +1,24 @@
-"""
-Shape of a `users` document in MongoDB. Not a strict ODM — Motor works
-with plain dicts — this just documents/validates the schema in one place.
-"""
 from datetime import datetime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
-from pydantic import BaseModel, EmailStr, Field
+from app.core.database import Base
 
 
-class UserInDB(BaseModel):
-    name: str
-    email: EmailStr
-    hashed_password: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+class User(Base):
+    __tablename__ = "users"
 
-    def to_mongo(self) -> dict:
-        return self.model_dump()
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    username = Column(String, unique=True, index=True, nullable=False)
+    full_name = Column(String, nullable=True)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    sessions = relationship("StudySession", back_populates="user", cascade="all, delete-orphan")
+    documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
+    

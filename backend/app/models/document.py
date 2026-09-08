@@ -1,24 +1,28 @@
-"""
-Shape of a `documents` document in MongoDB (an uploaded PDF + its
-extracted chunks). FAISS indices are NOT persisted here — they're
-rebuilt in memory from `chunks` on demand (see rag_service).
-"""
 from datetime import datetime
-from typing import List
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, JSON
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
-from pydantic import BaseModel, Field
+from app.core.database import Base
 
 
-class DocumentInDB(BaseModel):
-    id: str
-    filename: str
-    user_email: str
-    upload_date: datetime = Field(default_factory=datetime.utcnow)
-    chunks: List[str]
-    page_count: int
-    word_count: int
+class Document(Base):
+    __tablename__ = "documents"
 
-    def to_mongo(self) -> dict:
-        data = self.model_dump()
-        data["_id"] = data.pop("id")
-        return data
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    filename = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    file_size = Column(Integer, nullable=False)
+
+    # Extracted content
+    chunks = Column(JSON, default=list)
+    page_count = Column(Integer, default=0)
+    word_count = Column(Integer, default=0)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    user = relationship("User", back_populates="documents")
+    
