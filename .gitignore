@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+env/
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# Env / secrets
+.env
+.env.local
+backend/.env
+
+# Uploaded / generated data
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Node / React
+node_modules/
+dist/
+build/
+.vite/
+frontend/node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Extension build
+extension/dist/
+
+# Frontend build artifacts (already covered above, explicit for clarity)
+frontend/dist/

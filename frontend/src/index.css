@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    background-color: #0B0F1A;
+  }
+  ::selection {
+    background-color: #5EEAD4;
+    color: #0B0F1A;
+  }
+  :focus-visible {
+    outline: 2px solid #5EEAD4;
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #2A3350;
+    border-radius: 9999px;
+  }
+}
