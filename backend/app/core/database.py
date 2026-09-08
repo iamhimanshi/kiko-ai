@@ -3,14 +3,15 @@ from sqlalchemy.orm import declarative_base
 
 from app.core.config import settings
 
-# Async engine for PostgreSQL
+# Use asyncpg driver
+DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    DATABASE_URL,
     echo=settings.ENV == "development",
     pool_pre_ping=True,
 )
 
-# Async session factory
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
@@ -23,7 +24,6 @@ Base = declarative_base()
 
 
 async def get_db() -> AsyncSession:
-    """Dependency for FastAPI routes."""
     async with AsyncSessionLocal() as session:
         try:
             yield session

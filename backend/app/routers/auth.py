@@ -1,46 +1,34 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.auth import SignupResponse, TokenResponse, UserLogin, UserOut, UserSignup
+from app.core.database import get_db
+from app.schemas.user import UserCreate, UserInDB, Token
 from app.services import auth_service
-from app.utils.deps import get_current_user
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
-
-
-@router.post("/signup", response_model=SignupResponse)
-async def signup(payload: UserSignup):
-    user = await auth_service.signup(payload)
-    return {"message": "Signup successful", "user": user}
+router = APIRouter(prefix="/auth", tags=["Authentication"])
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-@router.post("/login", response_model=TokenResponse)
-async def login(payload: UserLogin):
-    result = await auth_service.login(payload)
-    return {
-        "message": "Login successful",
-        "access_token": result["access_token"],
-        "user": result["user"],
-    }
+@router.post("/register", response_model=UserInDB)
+async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
+    return await auth_service.create_user(db, user_data)
 
 
-@router.get("/me", response_model=UserOut)
-async def me(current_user: dict = Depends(get_current_user)):
-    return {"name": current_user["name"], "email": current_user["email"]}
+@router.post("/login", response_model=Token)
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    user = await auth_service.authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token = auth_service.create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.post("/logout")
-async def logout(current_user: dict = Depends(get_current_user)):
-    # JWTs are stateless — "logout" just means the client discards the
-    # token. Kept as an endpoint for API-shape compatibility with the
-    # old session-based flow, and as a hook for a future token-blocklist.
-    return {"message": "Logout successful"}
-
-
-@router.post("/demo", response_model=TokenResponse)
-async def start_demo():
-    result = await auth_service.create_demo_session()
-    return {
-        "message": "Demo session started",
-        "access_token": result["access_token"],
-        "user": result["user"],
-    }
+@router.get("/me", response_model=UserInDB)
+async def get_me(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
+    return await auth_service.get_current_user(db, token)

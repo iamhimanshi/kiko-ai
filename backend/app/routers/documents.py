@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, File, UploadFile
 
 from app.schemas.document import DeleteResponse, DocumentListResponse, UploadResponse
 from app.services import document_service
+from app.core.database import get_db
 from app.utils.deps import get_current_user
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])

@@ -21,4 +21,5 @@ class User(Base):
     # Relationships
     sessions = relationship("StudySession", back_populates="user", cascade="all, delete-orphan")
     documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
+
     

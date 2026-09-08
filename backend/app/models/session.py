@@ -33,7 +33,7 @@ class StudySession(Base):
     # Status
     status = Column(Enum(SessionStatus), default=SessionStatus.ACTIVE)
 
-    # Analytics (calculated at end)
+    # Analytics
     focus_score = Column(Float, nullable=True)
     focused_minutes = Column(Integer, nullable=True)
     distracted_minutes = Column(Integer, nullable=True)
