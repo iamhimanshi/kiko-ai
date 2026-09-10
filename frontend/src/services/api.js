@@ -7,7 +7,6 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Add token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
@@ -34,15 +33,21 @@ export const authApi = {
 export const sessionApi = {
   create: (data) => api.post('/sessions', data),
   getActive: () => api.get('/sessions/active'),
+  getById: (id) => api.get(`/sessions/${id}`),
+  list: (limit = 20) => api.get(`/sessions?limit=${limit}`),
+  pause: (id) => api.post(`/sessions/${id}/pause`),
+  resume: (id) => api.post(`/sessions/${id}/resume`),
   end: (id) => api.post(`/sessions/${id}/end`),
-  getHistory: () => api.get('/sessions'),
+  toggleTask: (sessionId, taskId) =>
+    api.patch(`/sessions/${sessionId}/tasks/${taskId}`),
 };
 
 // Documents
 export const documentApi = {
-  upload: (formData) => api.post('/documents/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }),
+  upload: (formData) =>
+    api.post('/documents/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
   getDocuments: () => api.get('/documents'),
   delete: (id) => api.delete(`/documents/${id}`),
 };

@@ -6,20 +6,21 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import SessionSetup from './pages/SessionSetup';
+import SessionPreview from './pages/SessionPreview';
 import ActiveSession from './pages/ActiveSession';
-import SessionReport from './pages/SessionReport';
+import SessionComplete from './pages/SessionComplete';
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Routes */}
+          {/* Public */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
 
-          {/* Protected Routes */}
+          {/* Protected */}
           <Route
             path="/dashboard"
             element={
@@ -28,6 +29,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Study Session */}
           <Route
             path="/study-session/setup"
             element={
@@ -37,7 +40,15 @@ function App() {
             }
           />
           <Route
-            path="/study-session/active"
+            path="/study-session/preview"
+            element={
+              <ProtectedRoute>
+                <SessionPreview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/study-session/active/:sessionId"
             element={
               <ProtectedRoute>
                 <ActiveSession />
@@ -45,10 +56,10 @@ function App() {
             }
           />
           <Route
-            path="/study-session/report"
+            path="/study-session/complete/:sessionId"
             element={
               <ProtectedRoute>
-                <SessionReport />
+                <SessionComplete />
               </ProtectedRoute>
             }
           />
@@ -59,4 +70,3 @@ function App() {
 }
 
 export default App;
-

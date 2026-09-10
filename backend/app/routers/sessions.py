@@ -1,70 +1,105 @@
-from typing import Optional
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends
-
+from app.core.database import get_db
+from app.core.dependencies import get_current_user
+from app.models.user import User
 from app.schemas.session import (
-    ActivityBatchRequest,
-    ActivityBatchResponse,
-    CreateSessionRequest,
-    DashboardSummary,
-    EndSessionRequest,
-    LiveSessionStatus,
-    SessionOut,
-    SessionReportOut,
+    SessionCreate,
+    SessionResponse,
+    EndSessionResponse,
+    TaskToggleResponse,
 )
 from app.services import session_service
-from app.utils.deps import get_current_user
 
-router = APIRouter(prefix="/api/sessions", tags=["sessions"])
-dashboard_router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+router = APIRouter(prefix="/sessions", tags=["Study Sessions"])
 
 
-@router.post("", response_model=SessionOut)
-async def create_session(payload: CreateSessionRequest, current_user: dict = Depends(get_current_user)):
-    return await session_service.create_session(current_user["email"], payload)
-
-
-@router.get("", response_model=list[SessionReportOut])
-async def list_sessions(current_user: dict = Depends(get_current_user)):
-    return await session_service.list_sessions(current_user["email"])
-
-
-@router.get("/active", response_model=Optional[SessionOut])
-async def get_active_session(current_user: dict = Depends(get_current_user)):
-    """Must stay ABOVE /{session_id} — otherwise FastAPI matches 'active'
-    as a session_id path param and this route is never reached."""
-    return await session_service.get_active_session(current_user["email"])
-
-
-@router.get("/{session_id}", response_model=SessionOut)
-async def get_session(session_id: str, current_user: dict = Depends(get_current_user)):
-    return await session_service.get_session(current_user["email"], session_id)
-
-
-@router.post("/{session_id}/activity", response_model=ActivityBatchResponse)
-async def post_activity(
-    session_id: str, payload: ActivityBatchRequest, current_user: dict = Depends(get_current_user)
+@router.post("", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
+async def create_session(
+    data: SessionCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    return await session_service.ingest_activity(current_user["email"], session_id, payload)
+    return await session_service.create_session(db, current_user.id, data)
 
 
-@router.post("/{session_id}/end", response_model=SessionReportOut)
+@router.get("/active", response_model=Optional[SessionResponse])
+async def get_active(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await session_service.get_active_session(db, current_user.id)
+
+
+@router.get("", response_model=List[SessionResponse])
+async def list_sessions(
+    limit: int = 20,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await session_service.list_user_sessions(db, current_user.id, limit)
+
+
+@router.get("/{session_id}", response_model=SessionResponse)
+async def get_session(
+    session_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await session_service.get_session(db, session_id, current_user.id)
+
+
+@router.post("/{session_id}/pause", response_model=SessionResponse)
+async def pause_session(
+    session_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await session_service.pause_session(db, session_id, current_user.id)
+
+
+@router.post("/{session_id}/resume", response_model=SessionResponse)
+async def resume_session(
+    session_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await session_service.resume_session(db, session_id, current_user.id)
+
+
+@router.post("/{session_id}/end", response_model=EndSessionResponse)
 async def end_session(
-    session_id: str, payload: EndSessionRequest, current_user: dict = Depends(get_current_user)
+    session_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    return await session_service.end_session(current_user["email"], session_id, payload.goal_completed)
+    session = await session_service.end_session(db, session_id, current_user.id)
+    return EndSessionResponse(session=session, message="Session completed")
 
 
-@router.get("/{session_id}/report", response_model=SessionReportOut)
-async def get_report(session_id: str, current_user: dict = Depends(get_current_user)):
-    return await session_service.get_report(current_user["email"], session_id)
+@router.patch("/{session_id}/tasks/{task_id}", response_model=TaskToggleResponse)
+async def toggle_task(
+    session_id: int,
+    task_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    session = await session_service.toggle_task(
+        db, session_id, current_user.id, task_id
+    )
+    updated_task = next(
+        (t for t in session.tasks if t.get("id") == task_id), None
+    )
+    return TaskToggleResponse(
+        task_id=task_id,
+        is_completed=updated_task.get("is_completed", False) if updated_task else False,
+        completed_tasks=session.completed_tasks,
+        total_tasks=session.total_tasks,
+    )
 
 
-@router.get("/{session_id}/live", response_model=LiveSessionStatus)
-async def get_live_status(session_id: str, current_user: dict = Depends(get_current_user)):
-    return await session_service.get_live_status(current_user["email"], session_id)
 
 
-@dashboard_router.get("/summary", response_model=DashboardSummary)
-async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
-    return await session_service.dashboard_summary(current_user["email"])
+
