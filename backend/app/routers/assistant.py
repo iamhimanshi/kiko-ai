@@ -1,44 +1,47 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_db
+from app.core.dependencies import get_current_user
+from app.models.user import User
 from app.schemas.assistant import (
-    ChatRequest,
-    ChatResponse,
-    FlashcardResponse,
-    QuizRequest,
-    QuizResponse,
-    StudyPlanRequest,
-    StudyPlanResponse,
-    SummarizeRequest,
-    SummarizeResponse,
+    SummaryRequest, SummaryResponse,
+    ChatRequest, ChatResponse,
 )
 from app.services import assistant_service
-from app.utils.deps import get_current_user
 
-router = APIRouter(prefix="/api/assistant", tags=["assistant"])
-
-
-@router.post("/chat", response_model=ChatResponse)
-async def chat(payload: ChatRequest, current_user: dict = Depends(get_current_user)):
-    return await assistant_service.chat(current_user["email"], payload.document_id, payload.question)
+router = APIRouter(prefix="/assistant", tags=["AI Study Assistant"])
 
 
-@router.post("/quiz", response_model=QuizResponse)
-async def generate_quiz(payload: QuizRequest, current_user: dict = Depends(get_current_user)):
-    return await assistant_service.generate_quiz(
-        current_user["email"], payload.document_id, payload.num_questions
+@router.post("/summary", response_model=SummaryResponse)
+async def generate_summary(
+    data: SummaryRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    summary = await assistant_service.generate_summary(
+        db, current_user.id, data.document_id, data.style, data.pages
+    )
+    return SummaryResponse(
+        document_id=data.document_id,
+        style=data.style,
+        summary=summary,
+        pages=data.pages,
     )
 
 
-@router.post("/summarize", response_model=SummarizeResponse)
-async def summarize(payload: SummarizeRequest, current_user: dict = Depends(get_current_user)):
-    return await assistant_service.summarize(current_user["email"], payload.document_id)
-
-
-@router.post("/flashcards", response_model=FlashcardResponse)
-async def generate_flashcards(payload: SummarizeRequest, current_user: dict = Depends(get_current_user)):
-    return await assistant_service.generate_flashcards(current_user["email"], payload.document_id)
-
-
-@router.post("/study-plan", response_model=StudyPlanResponse)
-async def study_plan(payload: StudyPlanRequest, current_user: dict = Depends(get_current_user)):
-    return await assistant_service.study_plan(payload.subjects, payload.days, payload.hours_per_day)
+@router.post("/chat", response_model=ChatResponse)
+async def chat(
+    data: ChatRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await assistant_service.chat(
+        db,
+        current_user.id,
+        data.message,
+        data.document_id,
+        data.pages,
+        [m.model_dump() for m in data.history],
+    )
+    return ChatResponse(reply=result["reply"], sources=result["sources"])

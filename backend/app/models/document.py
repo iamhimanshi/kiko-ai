@@ -16,13 +16,20 @@ class Document(Base):
     file_path = Column(String, nullable=False)
     file_size = Column(Integer, nullable=False)
 
-    # Extracted content
+    # pages: [{"number": 1, "text": "..."}, ...]
+    pages = Column(JSON, default=list)
+    # chunks: [{"text": "...", "page": 1, "index": 0}, ...]
     chunks = Column(JSON, default=list)
+
     page_count = Column(Integer, default=0)
+    chunk_count = Column(Integer, default=0)
     word_count = Column(Integer, default=0)
+
+    status = Column(String, default="ready", nullable=False)
+    error_message = Column(Text, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Relationships
     user = relationship("User", back_populates="documents")
+
     

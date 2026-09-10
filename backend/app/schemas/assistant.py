@@ -1,63 +1,35 @@
-from typing import List, Optional
-
+from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 
 
+SummaryStyle = Literal["quick", "detailed", "points"]
+
+
+class SummaryRequest(BaseModel):
+    document_id: int
+    style: SummaryStyle = "quick"
+    pages: Optional[List[int]] = None  # None or empty = entire document
+
+
+class SummaryResponse(BaseModel):
+    document_id: int
+    style: SummaryStyle
+    summary: str
+    pages: Optional[List[int]] = None
+
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
 class ChatRequest(BaseModel):
-    document_id: str
-    question: str = Field(min_length=1)
-
-
-class ChatSource(BaseModel):
-    chunk: str
-    index: int
+    message: str = Field(..., min_length=1, max_length=2000)
+    document_id: Optional[int] = None
+    pages: Optional[List[int]] = None
+    history: List[ChatMessage] = []
 
 
 class ChatResponse(BaseModel):
-    question: str
-    answer: str
-    sources: List[ChatSource]
-
-
-class QuizRequest(BaseModel):
-    document_id: str
-    num_questions: int = Field(default=5, ge=1, le=20)
-
-
-class QuizQuestion(BaseModel):
-    question: str
-    options: List[str]
-    answer: str
-
-
-class QuizResponse(BaseModel):
-    questions: List[QuizQuestion]
-    total: int
-    error: Optional[str] = None
-
-
-class SummarizeRequest(BaseModel):
-    document_id: str
-
-
-class SummarizeResponse(BaseModel):
-    summary: str
-
-
-class Flashcard(BaseModel):
-    front: str
-    back: str
-
-
-class FlashcardResponse(BaseModel):
-    flashcards: List[Flashcard]
-
-
-class StudyPlanRequest(BaseModel):
-    subjects: str
-    days: int = Field(ge=1, le=90)
-    hours_per_day: float = Field(gt=0, le=24)
-
-
-class StudyPlanResponse(BaseModel):
-    study_plan: str
+    reply: str
+    sources: List[dict] = []  # [{"page": 3, "preview": "..."}]

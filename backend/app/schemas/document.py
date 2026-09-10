@@ -1,27 +1,22 @@
-from typing import List
-
+from datetime import datetime
+from typing import List, Optional
 from pydantic import BaseModel
 
 
-class DocumentOut(BaseModel):
-    id: str
+class DocumentResponse(BaseModel):
+    id: int
     filename: str
-    upload_date: str
-    chunks: int
-    pages: int
+    file_size: int
+    page_count: int
+    word_count: int
+    chunk_count: int
+    status: str
+    error_message: Optional[str] = None
+    created_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
 
 
-class DocumentListResponse(BaseModel):
-    documents: List[DocumentOut]
-
-
-class UploadResponse(BaseModel):
-    message: str
-    document_id: str
-    filename: str
-    chunks: int
-    pages: int
-
-
-class DeleteResponse(BaseModel):
-    message: str
+class DocumentDetail(DocumentResponse):
+    chunks: List[str] = []

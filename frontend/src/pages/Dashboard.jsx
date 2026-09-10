@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import { sessionApi } from '../services/api';
 import { 
   Plus, 
   Clock, 
@@ -10,11 +12,33 @@ import {
   FileText, 
   ArrowRight,
   TrendingUp,
-  Activity
+  Activity,
+  PlayCircle,
+  AlertCircle
 } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [activeSession, setActiveSession] = useState(null);
+  const [loadingActive, setLoadingActive] = useState(true);
+
+  // Check for active session
+  useEffect(() => {
+    const checkActive = async () => {
+      try {
+        const response = await sessionApi.getActive();
+        // Backend returns null (or empty) if no active session
+        setActiveSession(response.data && response.data.id ? response.data : null);
+      } catch (err) {
+        // Silent fail — dashboard still works
+        setActiveSession(null);
+      } finally {
+        setLoadingActive(false);
+      }
+    };
+    checkActive();
+  }, []);
 
   const stats = [
     { icon: Clock, label: 'Study Time', value: '2h 35m', change: '+12%', changeType: 'up', iconBg: 'bg-[#EEF7F0]', iconColor: 'text-[#1B4332]' },
@@ -41,24 +65,82 @@ export default function Dashboard() {
 
   const maxFocus = Math.max(...weekData.map(d => d.focus));
 
+  const greeting = new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening';
+
   return (
     <div className="flex min-h-screen bg-[#F8F7F2]">
       <Sidebar />
       
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-8 overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-bold text-[#1F2937]">
-              Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}, {user?.full_name || user?.username} 👋
+              Good {greeting}, {user?.full_name || user?.username} 👋
             </h1>
-            <p className="text-[#4B5563] text-sm">Ready to make your next study session count?</p>
+            <p className="text-[#4B5563] text-sm">
+              {activeSession
+                ? 'You have an active session in progress.'
+                : 'Ready to make your next study session count?'}
+            </p>
           </div>
-          <Link to="/study-session/setup" className="bg-[#1B4332] hover:bg-[#24543F] text-white px-5 py-2.5 rounded-[14px] font-medium transition flex items-center gap-2">
-            <Plus size={18} />
-            Start Study Session
-          </Link>
+
+          {/* CTA — Contextual */}
+          {loadingActive ? (
+            <div className="bg-[#EDF4EE] text-[#6B7280] px-5 py-2.5 rounded-[14px] font-medium text-sm">
+              Checking...
+            </div>
+          ) : activeSession ? (
+            <Link
+              to={`/study-session/active/${activeSession.id}`}
+              className="bg-[#D4A64A] hover:bg-[#C9962E] text-white px-5 py-2.5 rounded-[14px] font-medium transition flex items-center gap-2 shadow-[0px_4px_12px_rgba(212,166,74,0.3)]"
+            >
+              <PlayCircle size={18} />
+              Resume Session
+            </Link>
+          ) : (
+            <Link
+              to="/study-session/setup"
+              className="bg-[#1B4332] hover:bg-[#24543F] text-white px-5 py-2.5 rounded-[14px] font-medium transition flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Start Study Session
+            </Link>
+          )}
         </div>
+
+        {/* Active Session Banner */}
+        {activeSession && !loadingActive && (
+          <Link
+            to={`/study-session/active/${activeSession.id}`}
+            className="block bg-gradient-to-br from-[#FFF8E8] to-[#FFF3D6] border border-[#D4A64A]/40 rounded-[18px] p-5 mb-6 hover:shadow-[0px_4px_12px_rgba(212,166,74,0.15)] transition"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-[#D4A64A] rounded-xl flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="text-white" size={20} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-[#4D3A11] font-semibold text-sm">
+                      Active Session in Progress
+                    </p>
+                    <span className="bg-[#D4A64A]/20 text-[#4D3A11] text-[10px] font-medium px-2 py-0.5 rounded-full">
+                      {activeSession.status}
+                    </span>
+                  </div>
+                  <p className="text-[#4D3A11] text-sm font-medium">
+                    {activeSession.subject}
+                  </p>
+                  <p className="text-[#6B7280] text-xs mt-0.5">
+                    {activeSession.goal}
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="text-[#D4A64A] flex-shrink-0 mt-2" size={20} />
+            </div>
+          </Link>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
