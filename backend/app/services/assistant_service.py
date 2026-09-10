@@ -110,3 +110,129 @@ async def chat(
 
     reply = await ai_service.generate_chat(messages, temperature=0.4)
     return {"reply": reply.strip(), "sources": sources}
+
+
+FLASHCARD_PROMPT = """Create {count} flashcards from the study material below.
+
+Difficulty: {difficulty}
+
+Return ONLY valid JSON in this exact shape (no markdown, no extra text):
+[
+  {{"question": "...", "answer": "..."}},
+  ...
+]
+
+Rules:
+- Questions should test understanding, not rote memorization.
+- Answers must be concise (1–3 sentences).
+- Base every card ONLY on the material provided.
+- No duplicates.
+
+Material:
+{content}
+"""
+
+
+QUIZ_PROMPT = """Create {count} multiple-choice quiz questions from the study material below.
+
+Difficulty: {difficulty}
+
+Return ONLY valid JSON in this exact shape (no markdown, no extra text):
+[
+  {{
+    "question": "...",
+    "options": ["A", "B", "C", "D"],
+    "correct_index": 0,
+    "explanation": "..."
+  }},
+  ...
+]
+
+Rules:
+- Exactly 4 options per question.
+- "correct_index" is the 0-based index of the correct option.
+- One clearly correct answer per question.
+- Explanation: 1–2 sentences.
+- Base every question ONLY on the material provided.
+- No duplicates.
+
+Material:
+{content}
+"""
+
+
+async def generate_flashcards(
+    db: AsyncSession,
+    user_id: int,
+    document_id: int,
+    pages: Optional[List[int]],
+    count: int,
+    difficulty: str,
+):
+    doc = await document_service.get_document(db, document_id, user_id)
+    chunks = _filter_chunks(doc, pages)
+    if not chunks:
+        raise HTTPException(status_code=400, detail="No content available for the selected pages.")
+
+    content = _join_text(chunks, max_chars=12000)
+    prompt = FLASHCARD_PROMPT.format(content=content, count=count, difficulty=difficulty)
+
+    data = await ai_service.generate_json(prompt, system=SYSTEM_PROMPT, temperature=0.6)
+
+    if not isinstance(data, list):
+        raise HTTPException(status_code=502, detail="AI returned an unexpected format.")
+
+    cards = []
+    for item in data[:count]:
+        if isinstance(item, dict) and "question" in item and "answer" in item:
+            cards.append({"question": str(item["question"]), "answer": str(item["answer"])})
+
+    if not cards:
+        raise HTTPException(status_code=502, detail="AI returned no valid flashcards.")
+
+    return cards
+
+
+async def generate_quiz(
+    db: AsyncSession,
+    user_id: int,
+    document_id: int,
+    pages: Optional[List[int]],
+    count: int,
+    difficulty: str,
+):
+    doc = await document_service.get_document(db, document_id, user_id)
+    chunks = _filter_chunks(doc, pages)
+    if not chunks:
+        raise HTTPException(status_code=400, detail="No content available for the selected pages.")
+
+    content = _join_text(chunks, max_chars=12000)
+    prompt = QUIZ_PROMPT.format(content=content, count=count, difficulty=difficulty)
+
+    data = await ai_service.generate_json(prompt, system=SYSTEM_PROMPT, temperature=0.5)
+
+    if not isinstance(data, list):
+        raise HTTPException(status_code=502, detail="AI returned an unexpected format.")
+
+    questions = []
+    for item in data[:count]:
+        if not isinstance(item, dict):
+            continue
+        q = item.get("question")
+        opts = item.get("options")
+        ci = item.get("correct_index")
+        if not q or not isinstance(opts, list) or len(opts) != 4:
+            continue
+        if not isinstance(ci, int) or ci < 0 or ci > 3:
+            continue
+        questions.append({
+            "question": str(q),
+            "options": [str(o) for o in opts],
+            "correct_index": ci,
+            "explanation": str(item.get("explanation", "")),
+        })
+
+    if not questions:
+        raise HTTPException(status_code=502, detail="AI returned no valid quiz questions.")
+
+    return questions

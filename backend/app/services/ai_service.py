@@ -76,3 +76,37 @@ async def generate_chat(messages: list, temperature: float = 0.4, max_tokens: in
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"AI provider error: {str(e)[:200]}",
         )
+
+
+import json
+import re
+
+
+def _extract_json(text: str):
+    """Strip markdown code fences if present, then JSON-parse."""
+    text = text.strip()
+    # Remove ```json ... ``` or ``` ... ```
+    fence = re.match(r"^```(?:json)?\s*(.*?)\s*```$", text, re.DOTALL)
+    if fence:
+        text = fence.group(1).strip()
+    return json.loads(text)
+
+
+async def generate_json(
+    prompt: str,
+    system: Optional[str] = None,
+    temperature: float = 0.5,
+    max_tokens: int = 4096,
+):
+    """
+    Ask the model for JSON, parse it, return Python object.
+    Raises HTTPException on failure.
+    """
+    raw = await generate(prompt, system=system, temperature=temperature, max_tokens=max_tokens)
+    try:
+        return _extract_json(raw)
+    except (json.JSONDecodeError, ValueError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"AI returned invalid JSON: {str(e)[:150]}",
+        )

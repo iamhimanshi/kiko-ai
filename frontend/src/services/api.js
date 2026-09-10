@@ -56,6 +56,8 @@ export const documentApi = {
 export const assistantApi = {
   summarize: (data) => api.post('/assistant/summary', data),
   chat: (data) => api.post('/assistant/chat', data),
+  flashcards: (data) => api.post('/assistant/flashcards', data),
+  quiz: (data) => api.post('/assistant/quiz', data),
 };
 
 export default api;

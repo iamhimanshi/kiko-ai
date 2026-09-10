@@ -3,12 +3,13 @@ import Sidebar from '../components/Sidebar';
 import DocumentsTab from '../components/assistant/DocumentsTab';
 import AITutorTab from '../components/assistant/AITutorTab';
 import QuickRevisionTab from '../components/assistant/QuickRevisionTab';
+import PracticeTab from '../components/assistant/PracticeTab';
 import { FileText, MessageCircle, Brain, Sparkles, Calendar } from 'lucide-react';
 
 const TABS = [
   { id: 'documents', label: 'Documents',       icon: FileText },
   { id: 'tutor',     label: 'AI Tutor',        icon: MessageCircle },
-  { id: 'practice',  label: 'Practice',        icon: Brain,        disabled: true },
+  { id: 'practice',  label: 'Practice',        icon: Brain },
   { id: 'revision',  label: 'Quick Revision',  icon: Sparkles },
   { id: 'planner',   label: 'Planner',         icon: Calendar,     disabled: true },
 ];
@@ -22,7 +23,6 @@ export default function Assistant() {
       <Sidebar />
 
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Assistant header */}
         <div className="border-b border-[#E8ECE7]/50 bg-white/70 backdrop-blur-sm px-8 pt-6">
           <div className="max-w-5xl mx-auto">
             <div className="flex items-center gap-2 mb-4">
@@ -59,7 +59,6 @@ export default function Assistant() {
           </div>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-5xl mx-auto p-8">
             {activeTab === 'documents' && (
@@ -71,6 +70,7 @@ export default function Assistant() {
                 onDocChange={setSelectedDocId}
               />
             )}
+            {activeTab === 'practice' && <PracticeTab />}
             {activeTab === 'revision' && (
               <QuickRevisionTab initialDocId={selectedDocId} />
             )}

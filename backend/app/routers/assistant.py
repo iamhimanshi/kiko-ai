@@ -7,6 +7,8 @@ from app.models.user import User
 from app.schemas.assistant import (
     SummaryRequest, SummaryResponse,
     ChatRequest, ChatResponse,
+    FlashcardGenerateRequest, FlashcardResponse,
+    QuizGenerateRequest, QuizResponse,
 )
 from app.services import assistant_service
 
@@ -45,3 +47,28 @@ async def chat(
         [m.model_dump() for m in data.history],
     )
     return ChatResponse(reply=result["reply"], sources=result["sources"])
+
+
+@router.post("/flashcards", response_model=FlashcardResponse)
+async def generate_flashcards(
+    data: FlashcardGenerateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    cards = await assistant_service.generate_flashcards(
+        db, current_user.id, data.document_id, data.pages, data.count, data.difficulty
+    )
+    return FlashcardResponse(document_id=data.document_id, cards=cards)
+
+
+@router.post("/quiz", response_model=QuizResponse)
+async def generate_quiz(
+    data: QuizGenerateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    questions = await assistant_service.generate_quiz(
+        db, current_user.id, data.document_id, data.pages, data.count, data.difficulty
+    )
+    return QuizResponse(document_id=data.document_id, questions=questions)
+

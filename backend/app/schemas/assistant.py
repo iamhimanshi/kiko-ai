@@ -3,12 +3,13 @@ from pydantic import BaseModel, Field
 
 
 SummaryStyle = Literal["quick", "detailed", "points"]
+Difficulty = Literal["easy", "medium", "hard"]
 
 
 class SummaryRequest(BaseModel):
     document_id: int
     style: SummaryStyle = "quick"
-    pages: Optional[List[int]] = None  # None or empty = entire document
+    pages: Optional[List[int]] = None
 
 
 class SummaryResponse(BaseModel):
@@ -32,4 +33,43 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
-    sources: List[dict] = []  # [{"page": 3, "preview": "..."}]
+    sources: List[dict] = []
+
+
+# -------- Flashcards --------
+class FlashcardGenerateRequest(BaseModel):
+    document_id: int
+    pages: Optional[List[int]] = None
+    count: int = Field(default=10, ge=3, le=30)
+    difficulty: Difficulty = "medium"
+
+
+class Flashcard(BaseModel):
+    question: str
+    answer: str
+
+
+class FlashcardResponse(BaseModel):
+    document_id: int
+    cards: List[Flashcard]
+
+
+# -------- Quiz --------
+class QuizGenerateRequest(BaseModel):
+    document_id: int
+    pages: Optional[List[int]] = None
+    count: int = Field(default=10, ge=3, le=30)
+    difficulty: Difficulty = "medium"
+
+
+class QuizQuestion(BaseModel):
+    question: str
+    options: List[str]
+    correct_index: int
+    explanation: Optional[str] = None
+
+
+class QuizResponse(BaseModel):
+    document_id: int
+    questions: List[QuizQuestion]
+    
