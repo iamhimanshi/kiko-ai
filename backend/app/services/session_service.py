@@ -5,7 +5,7 @@ from uuid import uuid4
 from fastapi import HTTPException, status
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy.orm.attributes import flag_modified
 from app.models.session import StudySession, SessionStatus
 from app.schemas.session import SessionCreate
 
@@ -58,17 +58,20 @@ async def create_session(
     now = _now()
 
     session = StudySession(
-        user_id=user_id,
-        subject=data.subject,
-        goal=data.goal,
-        duration_minutes=data.duration_minutes,
-        tasks=tasks,
-        status=SessionStatus.ACTIVE.value,
-        started_at=now,
-        paused_duration_seconds=0,
-        completed_tasks=0,
-        total_tasks=len(tasks),
-    )
+    user_id=user_id,
+    subject=data.subject,
+    goal=data.goal,
+    duration_minutes=data.duration_minutes,
+    mode=data.mode,
+    work_duration_minutes=data.work_duration_minutes if data.mode == "pomodoro" else None,
+    break_duration_minutes=data.break_duration_minutes if data.mode == "pomodoro" else None,
+    tasks=tasks,
+    status=SessionStatus.ACTIVE.value,
+    started_at=now,
+    paused_duration_seconds=0,
+    completed_tasks=0,
+    total_tasks=len(tasks),
+)
     db.add(session)
     await db.commit()
     await db.refresh(session)
@@ -156,7 +159,6 @@ async def end_session(
     await db.refresh(session)
     return session
 
-
 async def toggle_task(
     db: AsyncSession, session_id: int, user_id: int, task_id: str
 ) -> StudySession:
@@ -169,7 +171,9 @@ async def toggle_task(
             status_code=400, detail="Cannot modify tasks for a closed session"
         )
 
-    tasks = list(session.tasks or [])
+    # Deep copy so SQLAlchemy detects the change (JSON column mutation issue)
+    import copy
+    tasks = copy.deepcopy(list(session.tasks or []))
     found = False
     for task in tasks:
         if task.get("id") == task_id:
@@ -182,19 +186,9 @@ async def toggle_task(
 
     session.tasks = tasks
     session.completed_tasks = sum(1 for t in tasks if t.get("is_completed"))
+    # Force SQLAlchemy to persist JSON change
+    flag_modified(session, "tasks")
     await db.commit()
     await db.refresh(session)
     return session
-
-
-async def list_user_sessions(
-    db: AsyncSession, user_id: int, limit: int = 20
-) -> List[StudySession]:
-    result = await db.execute(
-        select(StudySession)
-        .where(StudySession.user_id == user_id)
-        .order_by(StudySession.created_at.desc())
-        .limit(limit)
-    )
-    return list(result.scalars().all())
 

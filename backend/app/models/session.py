@@ -27,6 +27,11 @@ class StudySession(Base):
     goal = Column(String, nullable=False)
     duration_minutes = Column(Integer, nullable=False)
 
+    # Session mode (continuous / pomodoro)
+    mode = Column(String, default="continuous", nullable=False)
+    work_duration_minutes = Column(Integer, nullable=True)
+    break_duration_minutes = Column(Integer, nullable=True)
+
     # Tasks stored as JSON: [{id, text, is_completed, order}]
     tasks = Column(JSON, default=list)
 
@@ -64,4 +69,11 @@ class StudySession(Base):
 # Helper to generate task IDs
 def new_task_id() -> str:
     return str(uuid.uuid4())
-    
+
+    # Planning
+    subject = Column(String, nullable=False)
+    goal = Column(String, nullable=False)
+    duration_minutes = Column(Integer, nullable=False)
+    mode = Column(String, default="continuous", nullable=False)  # "continuous" | "pomodoro"
+    work_duration_minutes = Column(Integer, nullable=True)  # only used in pomodoro
+    break_duration_minutes = Column(Integer, nullable=True)  # only used in pomodoro

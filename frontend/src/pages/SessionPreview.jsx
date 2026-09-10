@@ -4,12 +4,12 @@ import Sidebar from '../components/Sidebar';
 import { sessionApi } from '../services/api';
 import {
   ArrowLeft,
-  Target,
   Clock,
-  CheckCircle,
   Circle,
   PlayCircle,
   Sparkles,
+  Zap,
+  Coffee,
 } from 'lucide-react';
 
 export default function SessionPreview() {
@@ -20,29 +20,26 @@ export default function SessionPreview() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // If user lands here directly without data, go back to setup
   if (!sessionData) {
     return <Navigate to="/study-session/setup" replace />;
   }
 
-  const { subject, goal, duration_minutes, tasks } = sessionData;
+  const {
+    subject,
+    goal,
+    duration_minutes,
+    tasks,
+    mode,
+    work_duration_minutes,
+    break_duration_minutes,
+  } = sessionData;
 
   const handleStart = async () => {
     setError('');
     setLoading(true);
-
     try {
-      const response = await sessionApi.create({
-        subject,
-        goal,
-        duration_minutes,
-        tasks,
-      });
-
-      // Navigate to active session with session ID
-      navigate(`/study-session/active/${response.data.id}`, {
-        replace: true,
-      });
+      const response = await sessionApi.create(sessionData);
+      navigate(`/study-session/active/${response.data.id}`, { replace: true });
     } catch (err) {
       const detail =
         err.response?.data?.detail || 'Could not start session. Try again.';
@@ -66,7 +63,6 @@ export default function SessionPreview() {
           </button>
 
           <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 overflow-hidden">
-            {/* Header */}
             <div className="bg-gradient-to-br from-[#EEF7F0] to-[#F8F7F2] p-8 text-center border-b border-[#E8ECE7]/50">
               <div className="text-5xl mb-3">🎯</div>
               <h1 className="text-2xl font-bold text-[#1F2937]">Ready to Focus?</h1>
@@ -75,7 +71,6 @@ export default function SessionPreview() {
               </p>
             </div>
 
-            {/* Body */}
             <div className="p-8">
               {error && (
                 <div className="bg-[#FDECEC] border border-[#D14343]/30 text-[#D14343] px-4 py-3 rounded-[14px] mb-5 text-sm">
@@ -83,7 +78,6 @@ export default function SessionPreview() {
                 </div>
               )}
 
-              {/* Subject */}
               <div className="mb-5">
                 <p className="text-[#6B7280] text-xs uppercase tracking-wider font-medium mb-1">
                   Subject
@@ -91,7 +85,6 @@ export default function SessionPreview() {
                 <p className="text-[#1F2937] font-semibold text-lg">{subject}</p>
               </div>
 
-              {/* Goal */}
               <div className="mb-5">
                 <p className="text-[#6B7280] text-xs uppercase tracking-wider font-medium mb-1">
                   Goal
@@ -99,20 +92,46 @@ export default function SessionPreview() {
                 <p className="text-[#1F2937]">{goal}</p>
               </div>
 
-              {/* Duration */}
-              <div className="mb-5">
-                <p className="text-[#6B7280] text-xs uppercase tracking-wider font-medium mb-1">
-                  Duration
-                </p>
-                <div className="flex items-center gap-2">
-                  <Clock size={16} className="text-[#1B4332]" />
-                  <p className="text-[#1F2937] font-medium">
-                    {duration_minutes} minutes
+              <div className="grid grid-cols-2 gap-4 mb-5">
+                <div>
+                  <p className="text-[#6B7280] text-xs uppercase tracking-wider font-medium mb-1">
+                    Duration
                   </p>
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-[#1B4332]" />
+                    <p className="text-[#1F2937] font-medium">{duration_minutes} min</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[#6B7280] text-xs uppercase tracking-wider font-medium mb-1">
+                    Mode
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {mode === 'pomodoro' ? (
+                      <>
+                        <Coffee size={16} className="text-[#D4A64A]" />
+                        <p className="text-[#1F2937] font-medium">Pomodoro</p>
+                      </>
+                    ) : (
+                      <>
+                        <Zap size={16} className="text-[#1B4332]" />
+                        <p className="text-[#1F2937] font-medium">Continuous</p>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Tasks */}
+              {mode === 'pomodoro' && (
+                <div className="bg-[#FFF8E8] border border-[#D4A64A]/30 rounded-[14px] p-3 mb-5">
+                  <p className="text-[#4D3A11] text-xs">
+                    Focus <span className="font-semibold">{work_duration_minutes} min</span>
+                    {' · '}
+                    Break <span className="font-semibold">{break_duration_minutes} min</span>
+                  </p>
+                </div>
+              )}
+
               {tasks && tasks.length > 0 && (
                 <div className="mb-6">
                   <p className="text-[#6B7280] text-xs uppercase tracking-wider font-medium mb-2">

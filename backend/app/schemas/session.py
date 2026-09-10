@@ -15,6 +15,10 @@ class SessionCreate(BaseModel):
     goal: str = Field(..., min_length=1, max_length=500)
     duration_minutes: int = Field(..., ge=1, le=480)
     tasks: List[str] = Field(default_factory=list)
+    mode: str = Field(default="continuous", pattern="^(continuous|pomodoro)$")
+    work_duration_minutes: Optional[int] = Field(default=None, ge=1, le=120)
+    break_duration_minutes: Optional[int] = Field(default=None, ge=1, le=60)
+    
 
     @field_validator("subject", "goal")
     @classmethod
@@ -36,6 +40,9 @@ class SessionResponse(BaseModel):
     subject: str
     goal: str
     duration_minutes: int
+    mode: str
+    work_duration_minutes: Optional[int] = None
+    break_duration_minutes: Optional[int] = None
     tasks: List[TaskSchema]
     status: str
     created_at: Optional[datetime]
@@ -54,7 +61,7 @@ class SessionResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
+        
 
 class TaskToggleResponse(BaseModel):
     task_id: str
@@ -67,4 +74,5 @@ class EndSessionResponse(BaseModel):
     session: SessionResponse
     message: str
 
-    
+
+

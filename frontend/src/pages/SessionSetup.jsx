@@ -8,8 +8,9 @@ import {
   Clock,
   Target,
   BookOpen,
-  CheckCircle,
   Sparkles,
+  Zap,
+  Coffee,
 } from 'lucide-react';
 
 const DURATION_OPTIONS = [25, 45, 60, 90];
@@ -22,6 +23,9 @@ export default function SessionSetup() {
     duration: 60,
     customDuration: '',
     tasks: [''],
+    mode: 'continuous',
+    workDuration: 25,
+    breakDuration: 5,
   });
   const [error, setError] = useState('');
   const [useCustom, setUseCustom] = useState(false);
@@ -72,15 +76,20 @@ export default function SessionSetup() {
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
 
-    // Navigate to preview with session data
-    navigate('/study-session/preview', {
-      state: {
-        subject: formData.subject.trim(),
-        goal: formData.goal.trim(),
-        duration_minutes: finalDuration,
-        tasks: cleanedTasks,
-      },
-    });
+    const payload = {
+      subject: formData.subject.trim(),
+      goal: formData.goal.trim(),
+      duration_minutes: finalDuration,
+      tasks: cleanedTasks,
+      mode: formData.mode,
+    };
+
+    if (formData.mode === 'pomodoro') {
+      payload.work_duration_minutes = parseInt(formData.workDuration, 10) || 25;
+      payload.break_duration_minutes = parseInt(formData.breakDuration, 10) || 5;
+    }
+
+    navigate('/study-session/preview', { state: payload });
   };
 
   return (
@@ -105,7 +114,7 @@ export default function SessionSetup() {
               <h1 className="text-2xl font-bold text-[#1F2937]">Start a Study Session</h1>
             </div>
             <p className="text-[#4B5563] mb-6 text-sm">
-              Set your goal, break it into tasks, and stay focused.
+              Plan your next focused block.
             </p>
 
             {error && (
@@ -121,10 +130,7 @@ export default function SessionSetup() {
                   Subject
                 </label>
                 <div className="relative">
-                  <BookOpen
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]"
-                    size={18}
-                  />
+                  <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]" size={18} />
                   <input
                     type="text"
                     name="subject"
@@ -140,13 +146,10 @@ export default function SessionSetup() {
               {/* Goal */}
               <div className="mb-5">
                 <label className="block text-[#4B5563] text-sm font-medium mb-1.5">
-                  Study Goal
+                  What do you want to accomplish?
                 </label>
                 <div className="relative">
-                  <Target
-                    className="absolute left-4 top-4 text-[#9CA3AF]"
-                    size={18}
-                  />
+                  <Target className="absolute left-4 top-4 text-[#9CA3AF]" size={18} />
                   <textarea
                     name="goal"
                     value={formData.goal}
@@ -162,7 +165,7 @@ export default function SessionSetup() {
               {/* Duration */}
               <div className="mb-5">
                 <label className="block text-[#4B5563] text-sm font-medium mb-1.5">
-                  Duration
+                  Total Duration
                 </label>
                 <div className="grid grid-cols-4 gap-2 mb-2">
                   {DURATION_OPTIONS.map((min) => (
@@ -196,20 +199,92 @@ export default function SessionSetup() {
                   Custom Duration
                 </button>
                 {useCustom && (
-                  <div className="relative mt-2">
-                    <input
-                      type="number"
-                      name="customDuration"
-                      value={formData.customDuration}
-                      onChange={handleChange}
-                      min="1"
-                      max="480"
-                      className="w-full bg-white border border-[#E8ECE7] rounded-[14px] px-4 py-3 text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] transition-all"
-                      placeholder="Enter minutes (1–480)"
-                    />
-                  </div>
+                  <input
+                    type="number"
+                    name="customDuration"
+                    value={formData.customDuration}
+                    onChange={handleChange}
+                    min="1"
+                    max="480"
+                    className="w-full bg-white border border-[#E8ECE7] rounded-[14px] px-4 py-3 text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] transition-all mt-2"
+                    placeholder="Enter minutes (1–480)"
+                  />
                 )}
               </div>
+
+              {/* Session Mode */}
+              <div className="mb-5">
+                <label className="block text-[#4B5563] text-sm font-medium mb-1.5">
+                  Study Mode
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, mode: 'continuous' })}
+                    className={`py-3 rounded-[14px] text-sm font-medium transition flex items-center justify-center gap-2 ${
+                      formData.mode === 'continuous'
+                        ? 'bg-[#1B4332] text-white'
+                        : 'bg-white border border-[#E8ECE7] text-[#4B5563] hover:bg-[#EDF4EE]'
+                    }`}
+                  >
+                    <Zap size={16} />
+                    Continuous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, mode: 'pomodoro' })}
+                    className={`py-3 rounded-[14px] text-sm font-medium transition flex items-center justify-center gap-2 ${
+                      formData.mode === 'pomodoro'
+                        ? 'bg-[#1B4332] text-white'
+                        : 'bg-white border border-[#E8ECE7] text-[#4B5563] hover:bg-[#EDF4EE]'
+                    }`}
+                  >
+                    <Coffee size={16} />
+                    Pomodoro
+                  </button>
+                </div>
+                <p className="text-[#9CA3AF] text-xs mt-2">
+                  {formData.mode === 'continuous'
+                    ? 'Focus for the full duration without breaks.'
+                    : 'Alternate between focus sessions and short breaks.'}
+                </p>
+              </div>
+
+              {/* Pomodoro customization */}
+              {formData.mode === 'pomodoro' && (
+                <div className="mb-5 bg-[#FFF8E8] border border-[#D4A64A]/30 rounded-[14px] p-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[#4D3A11] text-xs font-medium mb-1.5">
+                        Focus interval (min)
+                      </label>
+                      <input
+                        type="number"
+                        name="workDuration"
+                        value={formData.workDuration}
+                        onChange={handleChange}
+                        min="1"
+                        max="120"
+                        className="w-full bg-white border border-[#D4A64A]/40 rounded-[12px] px-3 py-2 text-[#1F2937] text-sm focus:outline-none focus:ring-2 focus:ring-[#D4A64A]/30 focus:border-[#D4A64A] transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[#4D3A11] text-xs font-medium mb-1.5">
+                        Break interval (min)
+                      </label>
+                      <input
+                        type="number"
+                        name="breakDuration"
+                        value={formData.breakDuration}
+                        onChange={handleChange}
+                        min="1"
+                        max="60"
+                        className="w-full bg-white border border-[#D4A64A]/40 rounded-[12px] px-3 py-2 text-[#1F2937] text-sm focus:outline-none focus:ring-2 focus:ring-[#D4A64A]/30 focus:border-[#D4A64A] transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Tasks */}
               <div className="mb-6">
