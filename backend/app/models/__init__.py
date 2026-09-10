@@ -2,6 +2,7 @@ from app.models.user import User
 from app.models.session import StudySession, SessionStatus
 from app.models.behavior import BehaviorEvent
 from app.models.document import Document
+from app.models.practice_record import PracticeRecord
 
 __all__ = [
     "User",
@@ -9,5 +10,5 @@ __all__ = [
     "SessionStatus",
     "BehaviorEvent",
     "Document",
+    "PracticeRecord",
 ]
-

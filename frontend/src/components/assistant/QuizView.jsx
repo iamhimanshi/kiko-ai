@@ -10,7 +10,7 @@ const DIFFS = [
   { id: 'hard', label: 'Hard' },
 ];
 
-export default function QuizView({ onBack, initialDocId }) {
+export default function QuizView({ onBack, initialDocId, initialRecord }) {
   const [documents, setDocuments] = useState([]);
   const [docId, setDocId] = useState(initialDocId || '');
   const [pagesMode, setPagesMode] = useState('all');
@@ -29,6 +29,16 @@ export default function QuizView({ onBack, initialDocId }) {
   const [showReview, setShowReview] = useState(false);
 
   const doc = documents.find((d) => Number(d.id) === Number(docId));
+
+  // If opened from history, load record directly
+  useEffect(() => {
+    if (initialRecord && Array.isArray(initialRecord.data)) {
+      setQuestions(initialRecord.data);
+      setAnswers(new Array(initialRecord.data.length).fill(null));
+      setIndex(0);
+      setShowReview(false);
+    }
+  }, [initialRecord]);
 
   useEffect(() => {
     const load = async () => {

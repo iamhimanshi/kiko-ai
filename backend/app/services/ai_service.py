@@ -6,8 +6,8 @@ Features depend on this abstraction, not directly on Groq SDK.
 from typing import Optional, List
 from groq import AsyncGroq
 from fastapi import HTTPException, status
-
 from app.core.config import settings
+
 
 
 _client: Optional[AsyncGroq] = None

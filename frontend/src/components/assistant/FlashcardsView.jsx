@@ -13,7 +13,7 @@ const DIFFS = [
   { id: 'hard', label: 'Hard' },
 ];
 
-export default function FlashcardsView({ onBack, initialDocId }) {
+export default function FlashcardsView({ onBack, initialDocId, initialRecord }) {
   const [documents, setDocuments] = useState([]);
   const [docId, setDocId] = useState(initialDocId || '');
   const [pagesMode, setPagesMode] = useState('all');
@@ -32,6 +32,16 @@ export default function FlashcardsView({ onBack, initialDocId }) {
   const [reviewed, setReviewed] = useState(new Set());
 
   const doc = documents.find((d) => Number(d.id) === Number(docId));
+
+  // If opened from history, load record directly
+  useEffect(() => {
+    if (initialRecord && Array.isArray(initialRecord.data)) {
+      setCards(initialRecord.data);
+      setIndex(0);
+      setRevealed(false);
+      setReviewed(new Set());
+    }
+  }, [initialRecord]);
 
   useEffect(() => {
     const load = async () => {
@@ -107,7 +117,7 @@ export default function FlashcardsView({ onBack, initialDocId }) {
       setRevealed(false);
     } else {
       setRevealed(false);
-      setIndex(cards.length); // triggers "complete" view
+      setIndex(cards.length);
     }
   };
 
@@ -131,7 +141,6 @@ export default function FlashcardsView({ onBack, initialDocId }) {
     setReviewed(new Set());
   };
 
-  // ---- Setup view ----
   if (!cards) {
     return (
       <div className="space-y-5">
@@ -255,7 +264,6 @@ export default function FlashcardsView({ onBack, initialDocId }) {
     );
   }
 
-  // ---- Complete view ----
   if (index >= cards.length) {
     return (
       <div className="space-y-5">
@@ -284,7 +292,6 @@ export default function FlashcardsView({ onBack, initialDocId }) {
     );
   }
 
-  // ---- Card view ----
   const card = cards[index];
   const progress = ((index + 1) / cards.length) * 100;
 

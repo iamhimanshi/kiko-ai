@@ -1,5 +1,6 @@
 from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 
 SummaryStyle = Literal["quick", "detailed", "points"]
@@ -72,4 +73,18 @@ class QuizQuestion(BaseModel):
 class QuizResponse(BaseModel):
     document_id: int
     questions: List[QuizQuestion]
-    
+
+class PracticeRecordResponse(BaseModel):
+    id: int
+    type: str
+    document_id: Optional[int] = None
+    document_name: Optional[str] = None
+    count: int
+    difficulty: Optional[str] = None
+    created_at: Optional[datetime]
+    data: List[dict] = []
+
+    class Config:
+        from_attributes = True
+
+

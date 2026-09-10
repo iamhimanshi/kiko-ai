@@ -58,6 +58,14 @@ export const assistantApi = {
   chat: (data) => api.post('/assistant/chat', data),
   flashcards: (data) => api.post('/assistant/flashcards', data),
   quiz: (data) => api.post('/assistant/quiz', data),
+  practiceHistory: (type, limit = 10) => {
+    const params = new URLSearchParams();
+    if (type) params.append('type', type);
+    params.append('limit', limit);
+    return api.get(`/assistant/practice/history?${params.toString()}`);
+  },
+  practiceDetail: (id) => api.get(`/assistant/practice/history/${id}`),
+  practiceDelete: (id) => api.delete(`/assistant/practice/history/${id}`),
 };
 
 export default api;

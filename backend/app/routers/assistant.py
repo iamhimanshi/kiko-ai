@@ -11,6 +11,11 @@ from app.schemas.assistant import (
     QuizGenerateRequest, QuizResponse,
 )
 from app.services import assistant_service
+from typing import List, Optional
+from fastapi import HTTPException
+from sqlalchemy import select
+from app.models.practice_record import PracticeRecord
+from app.schemas.assistant import PracticeRecordResponse
 
 router = APIRouter(prefix="/assistant", tags=["AI Study Assistant"])
 
@@ -72,3 +77,54 @@ async def generate_quiz(
     )
     return QuizResponse(document_id=data.document_id, questions=questions)
 
+@router.get("/practice/history", response_model=List[PracticeRecordResponse])
+async def practice_history(
+    type: Optional[str] = None,
+    limit: int = 10,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    query = select(PracticeRecord).where(PracticeRecord.user_id == current_user.id)
+    if type in ("flashcards", "quiz"):
+        query = query.where(PracticeRecord.type == type)
+    query = query.order_by(PracticeRecord.created_at.desc()).limit(limit)
+    result = await db.execute(query)
+    return list(result.scalars().all())
+
+
+@router.get("/practice/history/{record_id}", response_model=PracticeRecordResponse)
+async def practice_history_detail(
+    record_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(PracticeRecord).where(
+            PracticeRecord.id == record_id,
+            PracticeRecord.user_id == current_user.id,
+        )
+    )
+    record = result.scalar_one_or_none()
+    if not record:
+        raise HTTPException(status_code=404, detail="Record not found")
+    return record
+
+
+@router.delete("/practice/history/{record_id}", status_code=204)
+async def delete_practice_record(
+    record_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(PracticeRecord).where(
+            PracticeRecord.id == record_id,
+            PracticeRecord.user_id == current_user.id,
+        )
+    )
+    record = result.scalar_one_or_none()
+    if not record:
+        raise HTTPException(status_code=404, detail="Record not found")
+    await db.delete(record)
+    await db.commit()
+    return None
