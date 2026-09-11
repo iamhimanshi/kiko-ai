@@ -1,234 +1,265 @@
-/**
- * MindGuard background service worker.
- *
- * Chrome constraint this code works around: MV3 service workers are
- * suspended after ~30s idle, and chrome.alarms cannot reliably fire
- * more often than once per minute in production. So instead of a
- * strict "flush every 15s" timer, we use:
- *   1. Instant flush on every tab switch / URL change (these listener
- *      events are NOT throttled — they fire immediately, no alarm needed).
- *   2. A recursive setTimeout heartbeat (~15s) that flushes the CURRENT
- *      tab's accumulated time while the worker happens to be alive.
- *   3. A 1-minute chrome.alarms backstop that wakes a suspended worker
- *      and restarts the heartbeat — guarantees a long, unswitched tab
- *      still gets reported at least once a minute.
- *
- * This keeps tab-switch reporting (and therefore FR-10 tab-switch
- * counting) instantaneous, while accepting that a single continuously
- * open distracting tab may take up to ~60s worst case to surface a
- * warning if the heartbeat happened to be dropped by suspension.
- */
+// ─────────────────────────────────────────────────────────
+// KIKO AI — MindGuard Service Worker (Manifest V3)
+// ─────────────────────────────────────────────────────────
 
-const API_BASE_CANDIDATES = ['http://localhost:8000', 'http://127.0.0.1:8000']
-const HEARTBEAT_MS = 15000
-const ALARM_NAME = 'kiko-heartbeat-backstop'
+const API_BASE = "http://localhost:8000";
+const HEARTBEAT_MS = 30 * 1000;
+const SESSION_POLL_MS = 15 * 1000;
+const MIN_FLUSH_GAP_MS = 3 * 1000;         // don't flush twice within 3s
+const SKIP_HOSTS = ["localhost", "127.0.0.1"];
 
-let apiBase = API_BASE_CANDIDATES[0]
-let tracking = null // { domain, title, startedAt, tabId }
-let heartbeatTimer = null
+const state = {
+  token: null,
+  session: null,
+  currentTab: null,
+  heartbeatTimer: null,
+  sessionTimer: null,
+  lastInterventionLevel: 0,
+  lastFlushedAt: 0,
+  lastFlushedKey: null,
+  isFlushing: false,
+};
 
-async function getStored(keys) {
-  return new Promise((resolve) => chrome.storage.local.get(keys, resolve))
-}
-async function setStored(obj) {
-  return new Promise((resolve) => chrome.storage.local.set(obj, resolve))
+// ─── Boot ───────────────────────────────────────────────
+async function boot() {
+  const { token } = await chrome.storage.local.get("token");
+  state.token = token || null;
+  if (!state.token) { setBadge("", "#6B7280"); return; }
+  await refreshSession();
+  startTimers();
 }
 
-function domainFromUrl(url) {
+function startTimers() {
+  if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
+  if (state.sessionTimer) clearInterval(state.sessionTimer);
+  state.heartbeatTimer = setInterval(onHeartbeat, HEARTBEAT_MS);
+  state.sessionTimer = setInterval(refreshSession, SESSION_POLL_MS);
+}
+
+// ─── HTTP ───────────────────────────────────────────────
+async function apiGet(path) {
+  if (!state.token) return null;
   try {
-    return new URL(url).hostname.replace(/^www\./, '')
-  } catch {
-    return null
-  }
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: { Authorization: `Bearer ${state.token}` },
+    });
+    if (res.status === 401) { await clearAuth(); return null; }
+    if (!res.ok) return null;
+    return await res.json();
+  } catch { return null; }
 }
 
-function isTrackableUrl(url) {
-  if (!url) return false
-  return url.startsWith('http://') || url.startsWith('https://')
-}
-
-async function apiFetch(path, options = {}) {
-  const { kiko_token: token } = await getStored(['kiko_token'])
-  if (!token) throw new Error('Not logged in')
-
-  const res = await fetch(`${apiBase}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...(options.headers || {}),
-    },
-  })
-  if (!res.ok) {
-    const body = await res.text().catch(() => '')
-    throw new Error(`API ${path} -> ${res.status}: ${body}`)
-  }
-  return res.json()
-}
-
-/** Flush whatever time has accumulated on the currently tracked tab as
- * one activity event, optionally flagged as a tab_switch boundary. */
-async function flush(tabSwitch = false) {
-  if (!tracking) return
-  const { kiko_session_id: sessionId } = await getStored(['kiko_session_id'])
-  if (!sessionId) return
-
-  const elapsedSeconds = Math.round((Date.now() - tracking.startedAt) / 1000)
-  if (elapsedSeconds <= 0) return
-
-  const event = {
-    domain: tracking.domain,
-    page_title: tracking.title || '',
-    duration_seconds: elapsedSeconds,
-    tab_switch: tabSwitch,
-  }
-
-  // Reset the accumulation window regardless of network outcome — we
-  // don't want a slow/failed request to double-count the same seconds.
-  tracking.startedAt = Date.now()
-
+async function apiPost(path, body) {
+  if (!state.token) return null;
   try {
-    const result = await apiFetch(`/api/sessions/${sessionId}/activity`, {
-      method: 'POST',
-      body: JSON.stringify({ events: [event] }),
-    })
-    await setStored({ kiko_last_status: result })
-  } catch (err) {
-    // Session may have ended from the web app, or token expired —
-    // either way, stop tracking rather than looping on a dead session.
-    if (String(err.message).includes('404') || String(err.message).includes('400')) {
-      await stopTracking()
-    }
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${state.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 401) { await clearAuth(); return null; }
+    if (!res.ok) return null;
+    return await res.json();
+  } catch { return null; }
+}
+
+async function clearAuth() {
+  await chrome.storage.local.remove("token");
+  state.token = null;
+  state.session = null;
+  state.currentTab = null;
+  setBadge("", "#6B7280");
+  if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
+  if (state.sessionTimer) clearInterval(state.sessionTimer);
+}
+
+// ─── Badge ──────────────────────────────────────────────
+function setBadge(text, color) {
+  try {
+    chrome.action.setBadgeText({ text });
+    if (color) chrome.action.setBadgeBackgroundColor({ color });
+  } catch (_) {}
+}
+
+function updateBadgeForFocus(focusState) {
+  switch (focusState) {
+    case "focused":    setBadge("●", "#2E7D32"); break;
+    case "attention":  setBadge("●", "#D97706"); break;
+    case "distracted": setBadge("!", "#D14343"); break;
+    case "paused":     setBadge("Ⅱ", "#6B7280"); break;
+    case "idle":       setBadge("·", "#9CA3AF"); break;
+    default:           setBadge("", "#6B7280");
   }
 }
 
-async function startTrackingTab(tab) {
-  if (!tab || !isTrackableUrl(tab.url)) {
-    tracking = null
-    return
+// ─── Session ────────────────────────────────────────────
+async function refreshSession() {
+  const session = await apiGet("/sessions/active");
+  if (!session || !session.id) {
+    state.session = null;
+    state.currentTab = null;
+    setBadge("", "#6B7280");
+    return;
   }
-  const domain = domainFromUrl(tab.url)
-  if (!domain) {
-    tracking = null
-    return
+  state.session = session;
+  if (session.status === "PAUSED") {
+    state.currentTab = null;
+    updateBadgeForFocus("paused");
+  } else if (!state.currentTab) {
+    await startTrackingActiveTab();
   }
-  tracking = {
-    domain,
-    title: tab.title || '',
+}
+
+// ─── Tab tracking ───────────────────────────────────────
+function normalizeDomain(url) {
+  try {
+    const u = new URL(url);
+    return u.hostname.replace(/^www\./, "");
+  } catch { return ""; }
+}
+
+function isSkippedHost(url) {
+  const host = normalizeDomain(url);
+  return SKIP_HOSTS.some((h) => host === h || host.endsWith("." + h));
+}
+
+async function startTrackingActiveTab() {
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  if (!tab || !tab.url) { state.currentTab = null; return; }
+  if (!/^https?:/.test(tab.url)) { state.currentTab = null; return; }
+  if (isSkippedHost(tab.url)) { state.currentTab = null; return; }
+
+  state.currentTab = {
+    url: tab.url,
+    title: tab.title || "",
+    domain: normalizeDomain(tab.url),
     startedAt: Date.now(),
-    tabId: tab.id,
-  }
+  };
 }
 
-async function handleTabChange(tab) {
-  const { kiko_session_id: sessionId } = await getStored(['kiko_session_id'])
-  if (!sessionId) {
-    tracking = null
-    return
+async function flushCurrentActivity(reason) {
+  if (!state.session || state.session.status !== "ACTIVE") return;
+  if (!state.currentTab) return;
+  if (state.isFlushing) return;
+
+  const now = Date.now();
+  const duration = Math.floor((now - state.currentTab.startedAt) / 1000);
+  if (duration < 5) return;
+
+  const key = `${state.currentTab.url}|${state.currentTab.title}`;
+  if (state.lastFlushedKey === key && now - state.lastFlushedAt < MIN_FLUSH_GAP_MS) {
+    state.currentTab.startedAt = now;
+    return;
   }
-  // flush the PREVIOUS tab's time, flagged as a tab switch boundary
-  await flush(true)
-  await startTrackingTab(tab)
-}
 
-function scheduleHeartbeat() {
-  if (heartbeatTimer) clearTimeout(heartbeatTimer)
-  heartbeatTimer = setTimeout(async () => {
-    await flush(false)
-    scheduleHeartbeat()
-  }, HEARTBEAT_MS)
-}
+  state.isFlushing = true;
+  state.lastFlushedKey = key;
+  state.lastFlushedAt = now;
 
-async function stopTracking() {
-  tracking = null
-  await setStored({ kiko_session_id: null })
-  if (heartbeatTimer) clearTimeout(heartbeatTimer)
-}
-
-// --- Extension lifecycle wiring ---
-
-chrome.tabs.onActivated.addListener(async ({ tabId }) => {
-  chrome.tabs.get(tabId, (tab) => handleTabChange(tab))
-})
-
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  // Only react to URL/title changes on the currently tracked tab, or a
-  // freshly completed navigation on the active tab — avoids re-tracking
-  // on every unrelated background-tab update.
-  if (changeInfo.status === 'complete' && tab.active) {
-    await handleTabChange(tab)
-    return
-  }
-  // YouTube (and other SPAs) swap the video/page without a fresh
-  // 'complete' navigation event — only the tab title changes. Without
-  // this branch, MindGuard would keep classifying based on whatever
-  // video title was loaded first, so FR-08 (YouTube title-based
-  // relevance) would silently go stale after the first video switch.
-  if (changeInfo.title && tab.active && tracking && tab.id === tracking.tabId) {
-    await handleTabChange(tab)
-  }
-})
-
-chrome.windows.onFocusChanged.addListener(async (windowId) => {
-  if (windowId === chrome.windows.WINDOW_ID_NONE) return
-  chrome.tabs.query({ active: true, windowId }, (tabs) => {
-    if (tabs[0]) handleTabChange(tabs[0])
-  })
-})
-
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === ALARM_NAME) {
-    flush(false)
-    autoDiscoverActiveSession()
-    scheduleHeartbeat() // restart fine-grained heartbeat after a wake
-  }
-})
-
-/** If we're logged in but not currently tracking a session, check
- * whether the user started one from the web app — makes MindGuard
- * "just connect" automatically (design brief §37) without requiring
- * the user to manually reopen the popup after every session start. */
-async function autoDiscoverActiveSession() {
-  const { kiko_token: token, kiko_session_id: sessionId } = await getStored(['kiko_token', 'kiko_session_id'])
-  if (!token || sessionId) return
+  const payload = {
+    session_id: state.session.id,
+    activities: [{
+      url: state.currentTab.url,
+      page_title: state.currentTab.title,
+      time_spent_seconds: duration,
+      tab_switches: reason === "tab_switch" ? 1 : 0,
+    }],
+  };
 
   try {
-    const active = await apiFetch('/api/sessions/active')
-    if (active) {
-      await setStored({ kiko_session_id: active.id })
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]) startTrackingTab(tabs[0])
-      })
+    const res = await apiPost("/mindguard/activity", payload);
+    state.currentTab.startedAt = Date.now();
+    if (res && Array.isArray(res.results) && res.results[0]) {
+      handleClassification(res.results[0]);
     }
-  } catch {
-    // not logged in / offline — nothing to do, next alarm tick retries
+  } finally {
+    state.isFlushing = false;
   }
 }
 
-chrome.runtime.onStartup.addListener(() => {
-  chrome.alarms.create(ALARM_NAME, { periodInMinutes: 1 })
-  scheduleHeartbeat()
-})
-
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.alarms.create(ALARM_NAME, { periodInMinutes: 1 })
-  scheduleHeartbeat()
-})
-
-// Messages from the popup (login success, session selected, logout)
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message.type === 'KIKO_SESSION_STARTED') {
-    setStored({ kiko_session_id: message.sessionId }).then(async () => {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]) startTrackingTab(tabs[0])
-      })
-      scheduleHeartbeat()
-      sendResponse({ ok: true })
-    })
-    return true
+function handleClassification(result) {
+  updateBadgeForFocus(result.focus_state);
+  const level = result.intervention_level || 0;
+  if (level >= 2 && level > state.lastInterventionLevel) {
+    showInterventionNotification(result);
   }
-  if (message.type === 'KIKO_SESSION_ENDED' || message.type === 'KIKO_LOGOUT') {
-    stopTracking().then(() => sendResponse({ ok: true }))
-    return true
+  state.lastInterventionLevel = level;
+}
+
+function showInterventionNotification(result) {
+  const level = result.intervention_level || 1;
+  const title = result.intervention_title || "MindGuard";
+  const message = result.intervention_message || "This activity looks unrelated to your study goal.";
+  try {
+    chrome.notifications.create({
+      type: "basic",
+      iconUrl: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231B4332'/%3E%3Ctext x='32' y='44' font-size='36' font-family='Arial' fill='white' text-anchor='middle' font-weight='bold'%3EK%3C/text%3E%3C/svg%3E",
+      title,
+      message,
+      priority: level >= 3 ? 2 : 1,
+    });
+  } catch (_) {}
+}
+
+// ─── Event handlers ─────────────────────────────────────
+async function onTabActivated() {
+  await flushCurrentActivity("tab_switch");
+  await startTrackingActiveTab();
+}
+
+async function onTabUpdated(tabId, changeInfo, tab) {
+  const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  if (!activeTab || activeTab.id !== tabId) return;
+
+  if (changeInfo.title && state.currentTab) {
+    state.currentTab.title = changeInfo.title;
   }
-})
+  if (changeInfo.url) {
+    if (isSkippedHost(changeInfo.url)) {
+      state.currentTab = null;
+      return;
+    }
+    await flushCurrentActivity("tab_switch");
+    await startTrackingActiveTab();
+  }
+}
+
+async function onWindowFocusChanged(windowId) {
+  if (windowId === chrome.windows.WINDOW_ID_NONE) {
+    await flushCurrentActivity("blur");
+  } else {
+    await startTrackingActiveTab();
+  }
+}
+
+async function onHeartbeat() {
+  await refreshSession();
+  await flushCurrentActivity("heartbeat");
+}
+
+// ─── Listeners ──────────────────────────────────────────
+chrome.tabs.onActivated.addListener(onTabActivated);
+chrome.tabs.onUpdated.addListener(onTabUpdated);
+chrome.windows.onFocusChanged.addListener(onWindowFocusChanged);
+
+chrome.alarms.create("wakeup", { periodInMinutes: 1 });
+chrome.alarms.onAlarm.addListener(() => {
+  if (!state.token) return;
+  onHeartbeat();
+});
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === "AUTH_CHANGED") { boot().then(() => sendResponse({ ok: true })); return true; }
+  if (msg.type === "GET_STATUS") {
+    sendResponse({ session: state.session, currentTab: state.currentTab, hasToken: !!state.token });
+    return true;
+  }
+  if (msg.type === "REFRESH_SESSION") { refreshSession().then(() => sendResponse({ ok: true })); return true; }
+});
+
+chrome.runtime.onStartup.addListener(boot);
+chrome.runtime.onInstalled.addListener(boot);
+boot();

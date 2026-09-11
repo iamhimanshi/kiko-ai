@@ -1,164 +1,288 @@
-/**
- * Popup script — vanilla JS, no build step needed for the extension.
- * Reuses the exact same /api/auth/login and /api/sessions/* endpoints
- * the web app uses; no separate auth system for the extension.
- */
+const API_BASE = "http://localhost:8000";
+const app = document.getElementById("app");
 
-const API_BASE_CANDIDATES = ['http://localhost:8000', 'http://127.0.0.1:8000']
-let apiBase = API_BASE_CANDIDATES[0]
-const root = document.getElementById('root')
+let statusTimer = null;
 
-function getStored(keys) {
-  return new Promise((resolve) => chrome.storage.local.get(keys, resolve))
-}
-function setStored(obj) {
-  return new Promise((resolve) => chrome.storage.local.set(obj, resolve))
+function escapeHtml(s) {
+  return String(s || "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
 }
 
-async function apiFetch(path, options = {}, token = null) {
-  const authToken = token ?? (await getStored(['kiko_token'])).kiko_token
-  const res = await fetch(`${apiBase}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-      ...(options.headers || {}),
-    },
-  })
-  if (!res.ok) throw new Error(`${res.status}`)
-  return res.json()
+async function getToken() {
+  const { token } = await chrome.storage.local.get("token");
+  return token || null;
 }
 
-function formatTime(totalSeconds) {
-  const m = Math.floor(totalSeconds / 60)
-  const s = totalSeconds % 60
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-}
-
-async function render() {
-  const { kiko_token: token, kiko_session_id: sessionId } = await getStored(['kiko_token', 'kiko_session_id'])
-
-  if (!token) {
-    renderLogin()
-    return
+async function login(email, password) {
+  const res = await fetch(`${API_BASE}/auth/login-json`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    let detail = "Login failed";
+    try { const j = await res.json(); detail = j.detail || detail; } catch {}
+    throw new Error(detail);
   }
-
-  if (!sessionId) {
-    renderNoActiveSession()
-    return
-  }
-
-  renderConnecting()
-  try {
-    const live = await apiFetch(`/api/sessions/${sessionId}/live`)
-    const session = await apiFetch(`/api/sessions/${sessionId}`)
-    renderActiveSession(session, live)
-  } catch {
-    // session likely ended elsewhere — clear and fall back
-    await setStored({ kiko_session_id: null })
-    renderNoActiveSession()
-  }
+  const data = await res.json();
+  await chrome.storage.local.set({ token: data.access_token });
+  chrome.runtime.sendMessage({ type: "AUTH_CHANGED" });
 }
 
+async function logout() {
+  await chrome.storage.local.remove("token");
+  chrome.runtime.sendMessage({ type: "AUTH_CHANGED" });
+  render();
+}
+
+// ─── Views ──────────────────────────────────────────────
 function renderLogin() {
-  root.innerHTML = `
-    <div id="error" class="error" style="display:none"></div>
-    <label for="email">Email</label>
-    <input id="email" type="email" placeholder="you@example.com" />
-    <label for="password">Password</label>
-    <input id="password" type="password" placeholder="••••••••" />
-    <button id="loginBtn">Log in</button>
-  `
-  document.getElementById('loginBtn').addEventListener('click', handleLogin)
+  app.innerHTML = `
+    <div class="wrap">
+      <div class="header">
+        <div class="logo">K</div>
+        <div class="brand">KIKO <span class="ai">AI</span></div>
+      </div>
+      <div class="card">
+        <div class="label">Sign in</div>
+        <p class="muted" style="margin-top:0;margin-bottom:14px">
+          Sign in with the same account you use on the KIKO web app.
+        </p>
+        <div id="login-error"></div>
+        <form id="login-form">
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="email" required placeholder="you@example.com" />
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="password" required placeholder="••••••••" />
+          </div>
+          <button type="submit" class="btn" id="login-btn">Sign in</button>
+        </form>
+      </div>
+    </div>
+  `;
+
+  const form = document.getElementById("login-form");
+  const btn = document.getElementById("login-btn");
+  const errDiv = document.getElementById("login-error");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errDiv.innerHTML = "";
+    btn.disabled = true;
+    btn.innerHTML = `<span class="loader"></span>Signing in...`;
+    try {
+      await login(
+        document.getElementById("email").value.trim(),
+        document.getElementById("password").value
+      );
+      render();
+    } catch (err) {
+      errDiv.innerHTML = `<div class="error">${escapeHtml(err.message)}</div>`;
+      btn.disabled = false;
+      btn.textContent = "Sign in";
+    }
+  });
 }
 
-async function handleLogin() {
-  const email = document.getElementById('email').value.trim()
-  const password = document.getElementById('password').value
-  const errorEl = document.getElementById('error')
-  const btn = document.getElementById('loginBtn')
-  errorEl.style.display = 'none'
-  btn.disabled = true
-  btn.textContent = 'Logging in…'
+function statusCard(label, cls, text) {
+  return `
+    <div class="card">
+      <div class="label">${label}</div>
+      <div class="status ${cls}">
+        <div class="dot ${cls === "focused" ? "pulse" : ""}"></div>
+        ${text}
+      </div>
+    </div>
+  `;
+}
+
+function renderNoSession() {
+  app.innerHTML = `
+    <div class="wrap">
+      ${headerHTML()}
+      ${statusCard("Status", "idle", "No Study Session")}
+      <div class="card">
+        <p class="muted" style="margin:0">
+          Start a study session in the KIKO web app to activate MindGuard.
+        </p>
+      </div>
+      ${footerHTML()}
+    </div>
+  `;
+  bindFooter();
+}
+
+function renderPaused(session) {
+  app.innerHTML = `
+    <div class="wrap">
+      ${headerHTML()}
+      ${statusCard("Status", "paused", "Session Paused")}
+      <div class="card">
+        <div class="label">Session</div>
+        <div class="value">${escapeHtml(session.subject)}</div>
+        <p class="muted">Monitoring is paused. Resume your session to continue.</p>
+      </div>
+      ${footerHTML()}
+    </div>
+  `;
+  bindFooter();
+}
+
+function renderActive(session, currentTab, classification) {
+  const focusState = classification?.focus_state || "focused";
+  const labels = { focused: "Focused", attention: "Attention", distracted: "Distracted" };
+  const statusText = labels[focusState] || "Focused";
+
+  const tabHTML = currentTab ? `
+    <div class="card">
+      <div class="label">Current Activity</div>
+      <div class="value">${escapeHtml(currentTab.domain || "")}</div>
+      ${currentTab.title ? `<p class="muted">${escapeHtml(currentTab.title)}</p>` : ""}
+      ${classification?.reason ? `<div class="divider"></div><p class="muted" style="margin:0">${escapeHtml(classification.reason)}</p>` : ""}
+    </div>
+  ` : `
+    <div class="card">
+      <div class="label">Current Activity</div>
+      <p class="muted" style="margin:0">Waiting for browser activity...</p>
+    </div>
+  `;
+
+  app.innerHTML = `
+    <div class="wrap">
+      ${headerHTML()}
+      ${statusCard("Focus Status", focusState, statusText)}
+      <div class="card">
+        <div class="label">Session</div>
+        <div class="value">${escapeHtml(session.subject)}</div>
+        <p class="muted">${escapeHtml(session.goal || "")}</p>
+      </div>
+      ${tabHTML}
+      ${footerHTML()}
+    </div>
+  `;
+  bindFooter();
+}
+
+function headerHTML() {
+  return `
+    <div class="header">
+      <div class="logo">K</div>
+      <div class="brand">KIKO <span class="ai">AI</span></div>
+    </div>
+  `;
+}
+
+function footerHTML() {
+  return `
+    <div class="card" style="padding:12px 16px">
+      <div class="row">
+        <span>Extension</span>
+        <strong style="color:#2E7D32">Connected ✓</strong>
+      </div>
+      <div class="row">
+        <span>MindGuard</span>
+        <strong>Active</strong>
+      </div>
+    </div>
+    <button class="btn secondary" id="logout-btn">Sign out</button>
+  `;
+}
+
+function bindFooter() {
+  const btn = document.getElementById("logout-btn");
+  if (btn) btn.addEventListener("click", logout);
+}
+
+// ─── Main render ────────────────────────────────────────
+async function render() {
+  if (statusTimer) {
+    clearInterval(statusTimer);
+    statusTimer = null;
+  }
+
+  const token = await getToken();
+  if (!token) {
+    renderLogin();
+    return;
+  }
+
+  await fetchAndRender();
+  statusTimer = setInterval(fetchAndRender, 3000);
+}
+
+async function fetchAndRender() {
+  const token = await getToken();
+  if (!token) {
+    renderLogin();
+    return;
+  }
+
+  let status = null;
+  let live = null;
 
   try {
-    const data = await apiFetch('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    })
-    await setStored({ kiko_token: data.access_token, kiko_user: data.user })
-    await render()
+    const [sRes, lRes] = await Promise.all([
+      fetch(`${API_BASE}/mindguard/status`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${API_BASE}/mindguard/live`,   { headers: { Authorization: `Bearer ${token}` } }),
+    ]);
+
+    if (sRes.status === 401) {
+      await chrome.storage.local.remove("token");
+      renderLogin();
+      return;
+    }
+
+    status = sRes.ok ? await sRes.json() : null;
+    live   = lRes.ok ? await lRes.json() : null;
   } catch {
-    errorEl.textContent = 'Could not log in. Check your credentials.'
-    errorEl.style.display = 'block'
-    btn.disabled = false
-    btn.textContent = 'Log in'
+    app.innerHTML = `
+      <div class="wrap">
+        ${headerHTML()}
+        ${statusCard("Connection", "error", "Not Connected")}
+        <div class="card">
+          <p class="muted" style="margin:0">Unable to reach KIKO. Make sure the backend is running.</p>
+        </div>
+        ${footerHTML()}
+      </div>
+    `;
+    bindFooter();
+    return;
   }
+
+  if (!status || !status.has_active_session) {
+    renderNoSession();
+    return;
+  }
+
+  if (status.status === "PAUSED") {
+    renderPaused({
+      subject: status.subject || "Study Session",
+    });
+    return;
+  }
+
+  const current = status.current_activity || null;
+  const classification = current ? {
+    focus_state: current.focus_state,
+    reason: current.reason,
+  } : null;
+
+  // Build a small tab object for the UI
+  const currentTab = current ? {
+    domain: current.domain,
+    title: current.page_title,
+  } : null;
+
+  renderActive(
+    { subject: status.subject, goal: status.goal },
+    currentTab,
+    classification
+  );
 }
 
-function renderNoActiveSession() {
-  root.innerHTML = `
-    <div class="status-row">
-      <span class="status-dot status-disconnected"></span>
-      <span>No active study session</span>
-    </div>
-    <p class="muted">Start a session from the KIKO AI dashboard, then reopen this popup to connect MindGuard.</p>
-    <button class="secondary" id="logoutBtn">Log out</button>
-  `
-  document.getElementById('logoutBtn').addEventListener('click', handleLogout)
-
-  // Also try auto-discovering an active session in case one was started
-  // in the web app after this popup was last opened.
-  apiFetch('/api/sessions/active')
-    .then(async (session) => {
-      if (session) {
-        await setStored({ kiko_session_id: session.id })
-        chrome.runtime.sendMessage({ type: 'KIKO_SESSION_STARTED', sessionId: session.id })
-        await render()
-      }
-    })
-    .catch(() => {})
-}
-
-function renderConnecting() {
-  root.innerHTML = `
-    <div class="status-row">
-      <span class="status-dot status-connecting"></span>
-      <span>Connecting…</span>
-    </div>
-  `
-}
-
-function renderActiveSession(session, live) {
-  const statusLabel = { focused: 'Focused', distracted: 'Distracted', monitoring: 'Monitoring' }[live.status]
-  const statusClass = { focused: 'status-connected', distracted: 'status-disconnected', monitoring: 'status-connecting' }[live.status]
-
-  root.innerHTML = `
-    <div class="status-row">
-      <span class="status-dot ${statusClass}"></span>
-      <span>MindGuard Active — ${statusLabel}</span>
-    </div>
-    <div class="card">
-      <div class="goal">Goal</div>
-      <div class="goal-text">${escapeHtml(session.goal)}</div>
-      <div class="metric-row"><span>Session</span><span class="metric-value">${formatTime(live.elapsed_seconds)}</span></div>
-      <div class="metric-row"><span>Focus score</span><span class="metric-value">${live.focus_score}%</span></div>
-    </div>
-    <button class="secondary" id="logoutBtn" style="margin-top:14px">Log out</button>
-  `
-  document.getElementById('logoutBtn').addEventListener('click', handleLogout)
-}
-
-async function handleLogout() {
-  chrome.runtime.sendMessage({ type: 'KIKO_LOGOUT' })
-  await setStored({ kiko_token: null, kiko_session_id: null, kiko_user: null })
-  await render()
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div')
-  div.textContent = str
-  return div.innerHTML
-}
-
-render()
+// Initial render
+render();

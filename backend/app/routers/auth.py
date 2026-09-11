@@ -32,3 +32,22 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
 @router.get("/me", response_model=UserInDB)
 async def get_me(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
     return await auth_service.get_current_user(db, token)
+
+
+from app.schemas.user import UserLogin
+
+
+@router.post("/login-json", response_model=Token)
+async def login_json(
+    data: UserLogin,
+    db: AsyncSession = Depends(get_db),
+):
+    user = await auth_service.authenticate_user(db, data.email, data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
+    access_token = auth_service.create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
+

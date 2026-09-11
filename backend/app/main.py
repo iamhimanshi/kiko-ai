@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.routers import auth, documents, assistant, sessions
+from app.routers import auth, documents, assistant, sessions, mindguard
 
 
 @asynccontextmanager
@@ -37,6 +37,7 @@ app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(assistant.router)
 app.include_router(sessions.router)
+app.include_router(mindguard.router)
 
 
 @app.get("/")

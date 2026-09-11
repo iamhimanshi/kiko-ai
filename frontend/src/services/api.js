@@ -68,4 +68,12 @@ export const assistantApi = {
   practiceDelete: (id) => api.delete(`/assistant/practice/history/${id}`),
 };
 
+export const mindguardApi = {
+  status: () => api.get('/mindguard/status'),
+  live: () => api.get('/mindguard/live'),
+  extensionStatus: () => api.get('/mindguard/extension-status'),
+  sendActivity: (data) => api.post('/mindguard/activity', data),
+};
+
+
 export default api;

@@ -1,18 +1,23 @@
 {
   "manifest_version": 3,
   "name": "KIKO AI — MindGuard",
-  "version": "0.1.0",
-  "description": "Watches which tab is active during a KIKO study session and reports focus-relevant activity back to KIKO AI.",
-  "permissions": ["tabs", "storage", "alarms"],
+  "version": "1.0.0",
+  "description": "Focus monitoring for your KIKO AI study sessions.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "notifications",
+    "alarms",
+    "idle"
+  ],
   "host_permissions": [
-    "http://localhost:8000/*",
-    "http://127.0.0.1:8000/*"
+    "http://localhost:8000/*"
   ],
   "background": {
     "service_worker": "background/service-worker.js"
   },
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "KIKO AI — MindGuard"
+    "default_title": "KIKO AI"
   }
 }

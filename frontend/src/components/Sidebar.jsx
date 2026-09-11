@@ -13,7 +13,7 @@ import {
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/study-session/setup', icon: Target, label: 'Study Session' },
+  { path: '/study-session', icon: Target, label: 'Study Session' },
   { path: '/assistant', icon: Brain, label: 'AI Study Assistant' },
   { path: '/mindguard', icon: Shield, label: 'MindGuard' },
   { path: '/analytics', icon: BarChart3, label: 'Analytics' },
@@ -48,7 +48,7 @@ export default function Sidebar() {
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path || 
-            (item.path === '/study-session/setup' && location.pathname.startsWith('/study-session'));
+  (item.path === '/study-session' && location.pathname.startsWith('/study-session'));
           
           return (
             <Link
