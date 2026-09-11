@@ -209,11 +209,11 @@ export default function SessionComplete() {
                   Dashboard
                 </button>
                 <button
-                  onClick={() => navigate(`/analytics/session/${session.id}`)}
+                  onClick={() => navigate('/study-session')}
                   className="flex-1 bg-[#1B4332] hover:bg-[#24543F] text-white py-3 rounded-[14px] font-medium transition flex items-center justify-center gap-2"
                 >
                   <FileText size={18} />
-                  View Session
+                  All Sessions
                 </button>
               </div>
             </div>

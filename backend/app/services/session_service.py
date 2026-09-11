@@ -192,3 +192,14 @@ async def toggle_task(
     await db.refresh(session)
     return session
 
+
+async def list_user_sessions(
+    db: AsyncSession, user_id: int, limit: int = 20
+) -> List[StudySession]:
+    result = await db.execute(
+        select(StudySession)
+        .where(StudySession.user_id == user_id)
+        .order_by(StudySession.created_at.desc())
+        .limit(limit)
+    )
+    return list(result.scalars().all())

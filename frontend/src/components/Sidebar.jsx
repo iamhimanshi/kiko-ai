@@ -31,7 +31,7 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-64 min-h-screen bg-[#163020] flex flex-col flex-shrink-0">
+    <aside className="w-64 h-screen sticky top-0 bg-[#163020] flex flex-col flex-shrink-0 overflow-y-auto">
       {/* Logo */}
       <div className="p-6 border-b border-[#2C493A]">
         <Link to="/dashboard" className="flex items-center gap-2">
