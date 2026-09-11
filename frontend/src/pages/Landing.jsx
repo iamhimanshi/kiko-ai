@@ -1,22 +1,62 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { 
-  ArrowRight, 
-  Sparkles, 
-  Brain, 
-  Target, 
-  BarChart3, 
-  Shield, 
-  Zap,
-  BookOpen,
-  Eye,
-  Clock,
-  TrendingUp,
-  CheckCircle,
-  Menu,
-  X
+import {
+  ArrowRight, Sparkles, Target, BarChart3, Shield, Zap,
+  BookOpen, Clock, TrendingUp, Menu, X, Code2, Database,
+  Brain, LineChart, Lock, Github, Linkedin, Mail
 } from 'lucide-react';
 import { useState } from 'react';
+
+const DEVELOPERS = [
+  {
+    name: 'Himanshi',
+    role: 'Backend & Database Engineer',
+    icon: Database,
+    iconBg: 'bg-[#EEF7F0]',
+    iconColor: 'text-[#1B4332]',
+    points: [
+      'Architected the FastAPI backend with PostgreSQL and SQLAlchemy',
+      'Built authentication, REST APIs and session management',
+      'Designed the relational data model powering all KIKO features',
+    ],
+  },
+  {
+    name: 'Kanika Gupta',
+    role: 'Frontend and AI Models',
+    icon: Brain,
+    iconBg: 'bg-[#FFF8E8]',
+    iconColor: 'text-[#D4A64A]',
+    points: [
+      'Integrated Groq LLM for summaries, flashcards, quizzes & AI Tutor',
+      'Built the RAG pipeline with Sentence Transformers + FAISS',
+      'Engineered prompts for grounded, material-aware responses',
+    ],
+  },
+  {
+    name: 'Rumana Khan',
+    role: 'Analytics & Data Visualization',
+    icon: LineChart,
+    iconBg: 'bg-[#EAF8EC]',
+    iconColor: 'text-[#2E7D32]',
+    points: [
+      'Developed the deterministic analytics engine for focus scoring',
+      'Built focus timelines, distraction breakdowns and website activity',
+      'Designed all metrics, trends and session-report visualizations',
+    ],
+  },
+  {
+    name: 'Gargi Pathak',
+    role: 'Security & Research',
+    icon: Lock,
+    iconBg: 'bg-[#FDECEC]',
+    iconColor: 'text-[#D14343]',
+    points: [
+      'Implemented JWT authentication and bcrypt password security',
+      'Enforced ownership checks, input validation & secure API boundaries',
+      'Led product research, threat modelling and privacy design',
+    ],
+  },
+];
 
 export default function Landing() {
   const { user } = useAuth();
@@ -30,9 +70,9 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-bg-cream">
-      {/* Navbar */}
+      {/* Navbar — full width */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-bg-white/90 backdrop-blur-sm border-b border-border/50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="w-full px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">K</span>
@@ -41,32 +81,27 @@ export default function Landing() {
             <span className="text-xs font-medium text-gold bg-gold-bg px-2 py-0.5 rounded-full">AI</span>
           </div>
 
-          {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8 text-sm text-text-slate">
             <button onClick={() => scrollToSection('features')} className="hover:text-primary transition">Features</button>
             <button onClick={() => scrollToSection('how-it-works')} className="hover:text-primary transition">How It Works</button>
+            <button onClick={() => scrollToSection('developers')} className="hover:text-primary transition">Team</button>
             <button onClick={() => scrollToSection('faq')} className="hover:text-primary transition">FAQ</button>
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <Link to="/dashboard" className="btn-primary">
-                Dashboard
-              </Link>
+              <Link to="/dashboard" className="btn-primary">Dashboard</Link>
             ) : (
               <>
                 <Link to="/login" className="text-text-slate hover:text-primary px-3 py-2 text-sm font-medium transition">
                   Log In
                 </Link>
-                <Link to="/signup" className="btn-primary">
-                  Get Started
-                </Link>
+                <Link to="/register" className="btn-primary">Get Started</Link>
               </>
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button 
+          <button
             className="md:hidden text-text-dark"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
@@ -74,11 +109,11 @@ export default function Landing() {
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-bg-white border-b border-border/50 px-6 py-4 space-y-3">
+          <div className="md:hidden bg-bg-white border-b border-border/50 px-8 py-4 space-y-3">
             <button onClick={() => scrollToSection('features')} className="block w-full text-left text-text-slate hover:text-primary py-2 transition">Features</button>
             <button onClick={() => scrollToSection('how-it-works')} className="block w-full text-left text-text-slate hover:text-primary py-2 transition">How It Works</button>
+            <button onClick={() => scrollToSection('developers')} className="block w-full text-left text-text-slate hover:text-primary py-2 transition">Team</button>
             <button onClick={() => scrollToSection('faq')} className="block w-full text-left text-text-slate hover:text-primary py-2 transition">FAQ</button>
             <div className="pt-3 border-t border-border flex flex-col gap-3">
               {user ? (
@@ -86,7 +121,7 @@ export default function Landing() {
               ) : (
                 <>
                   <Link to="/login" className="text-text-slate hover:text-primary text-center py-2 transition">Log In</Link>
-                  <Link to="/signup" className="btn-primary text-center">Get Started</Link>
+                  <Link to="/register" className="btn-primary text-center">Get Started</Link>
                 </>
               )}
             </div>
@@ -95,9 +130,9 @@ export default function Landing() {
       </header>
 
       <main>
-        {/* Hero */}
-        <section className="pt-32 pb-20 px-6 bg-gradient-to-br from-bg-cream via-bg-sage to-bg-cream">
-          <div className="max-w-5xl mx-auto text-center">
+        {/* Hero — full width */}
+        <section className="pt-32 pb-20 px-8 bg-gradient-to-br from-bg-cream via-bg-sage to-bg-cream">
+          <div className="w-full text-center">
             <div className="inline-flex items-center gap-2 bg-gold-bg border border-gold/30 text-gold px-4 py-1.5 rounded-full text-sm font-medium mb-6">
               <Sparkles size={16} />
               AI-Powered Study Companion
@@ -109,15 +144,15 @@ export default function Landing() {
               <br />
               <span className="text-gold">Improve Every Session.</span>
             </h1>
-            <p className="text-text-slate text-lg md:text-xl max-w-2xl mx-auto mb-8 leading-relaxed">
+            <p className="text-text-slate text-lg md:text-xl mx-auto mb-8 leading-relaxed max-w-3xl">
               KIKO AI combines intelligent study assistance with real-time focus coaching
               to help students learn, stay focused, and understand their study habits.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/signup" className="btn-primary flex items-center justify-center gap-2 text-base px-8 py-3">
+              <Link to="/register" className="btn-primary flex items-center justify-center gap-2 text-base px-8 py-3">
                 Get Started Free <ArrowRight size={18} />
               </Link>
-              <button 
+              <button
                 onClick={() => scrollToSection('how-it-works')}
                 className="btn-secondary flex items-center justify-center gap-2 text-base px-8 py-3"
               >
@@ -127,15 +162,15 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Problem */}
-        <section className="py-16 px-6 bg-bg-white border-y border-border/50">
-          <div className="max-w-4xl mx-auto text-center">
+        {/* Problem — full width */}
+        <section className="py-16 px-8 bg-bg-white border-y border-border/50">
+          <div className="w-full text-center">
             <span className="text-sm font-semibold text-gold uppercase tracking-wider">The Problem</span>
             <h2 className="text-3xl md:text-4xl font-bold text-text-dark mt-2 mb-4">
               The Internet Helps Us Study. <br className="hidden sm:block" />
               <span className="text-primary">It Also Distracts Us.</span>
             </h2>
-            <p className="text-text-slate text-lg max-w-2xl mx-auto leading-relaxed">
+            <p className="text-text-slate text-lg mx-auto leading-relaxed max-w-2xl">
               You open YouTube for a tutorial. Recommendations appear. You switch tabs.
               Instagram, entertainment, random browsing. <span className="text-primary font-semibold">30 minutes disappear.</span>
             </p>
@@ -147,13 +182,13 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* What is KIKO */}
-        <section id="features" className="py-20 px-6">
-          <div className="max-w-5xl mx-auto">
+        {/* Features — full width */}
+        <section id="features" className="py-20 px-8">
+          <div className="w-full">
             <div className="text-center mb-12">
               <span className="text-sm font-semibold text-gold uppercase tracking-wider">Features</span>
               <h2 className="text-3xl md:text-4xl font-bold text-text-dark mt-2">Meet KIKO AI</h2>
-              <p className="text-text-slate max-w-2xl mx-auto mt-2">
+              <p className="text-text-slate mx-auto mt-2 max-w-2xl">
                 An intelligent study companion that combines learning, focus, and analytics.
               </p>
             </div>
@@ -175,9 +210,9 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* How It Works */}
-        <section id="how-it-works" className="py-20 px-6 bg-bg-sage">
-          <div className="max-w-4xl mx-auto">
+        {/* How It Works — full width */}
+        <section id="how-it-works" className="py-20 px-8 bg-bg-sage">
+          <div className="w-full">
             <div className="text-center mb-12">
               <span className="text-sm font-semibold text-gold uppercase tracking-wider">Process</span>
               <h2 className="text-3xl md:text-4xl font-bold text-text-dark mt-2">How KIKO Works</h2>
@@ -202,7 +237,9 @@ export default function Landing() {
               </div>
               <div className="card p-8 flex flex-col items-center justify-center text-center">
                 <div className="text-6xl mb-4">🎯</div>
-                <p className="text-text-slate text-sm font-medium">Plan → Learn → Focus → Detect → Intervene → Analyze → Improve</p>
+                <p className="text-text-slate text-sm font-medium">
+                  Plan → Learn → Focus → Detect → Intervene → Analyze → Improve
+                </p>
                 <div className="w-full h-1.5 bg-border rounded-full mt-6">
                   <div className="w-full h-full bg-primary rounded-full" />
                 </div>
@@ -211,13 +248,13 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Why Different */}
-        <section className="py-20 px-6">
-          <div className="max-w-4xl mx-auto">
+        {/* Why Different — full width */}
+        <section className="py-20 px-8">
+          <div className="w-full">
             <div className="text-center mb-12">
               <span className="text-sm font-semibold text-gold uppercase tracking-wider">Why KIKO</span>
               <h2 className="text-3xl md:text-4xl font-bold text-text-dark mt-2">What Makes KIKO Different</h2>
-              <p className="text-text-slate max-w-2xl mx-auto mt-2">
+              <p className="text-text-slate mx-auto mt-2 max-w-2xl">
                 KIKO doesn't ask <span className="text-text-muted line-through">"Which websites should I block?"</span><br />
                 It asks <span className="text-primary font-semibold">"Is this activity helping me achieve my study goal?"</span>
               </p>
@@ -241,42 +278,89 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="py-20 px-6 bg-gradient-to-br from-gold-bg to-bg-cream border-y border-gold/30">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-dark mb-4">Ready to Take Control of Your Study Sessions?</h2>
-            <p className="text-text-slate mb-8 text-lg">Start learning with KIKO AI and turn your study time into focused study time.</p>
-            <Link to="/signup" className="btn-primary inline-flex items-center gap-2 text-base px-8 py-3">
+        {/* Developers / Team — full width */}
+        <section id="developers" className="py-20 px-8 bg-bg-sage">
+          <div className="w-full">
+            <div className="text-center mb-12">
+              <span className="text-sm font-semibold text-gold uppercase tracking-wider">The Team</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-text-dark mt-2">Meet the Developers</h2>
+              <p className="text-text-slate mx-auto mt-2 max-w-2xl">
+                Four engineers, one mission — build a study companion that actually understands students.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {DEVELOPERS.map((dev, i) => {
+                const Icon = dev.icon;
+                return (
+                  <div key={i} className="card p-6">
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className={`w-14 h-14 ${dev.iconBg} rounded-2xl flex items-center justify-center flex-shrink-0`}>
+                        <Icon className={dev.iconColor} size={26} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-lg font-bold text-text-dark">{dev.name}</h3>
+                        <p className="text-primary text-sm font-medium">{dev.role}</p>
+                      </div>
+                    </div>
+
+                    <ul className="space-y-2">
+                      {dev.points.map((p, j) => (
+                        <li key={j} className="flex items-start gap-2 text-text-slate text-sm leading-relaxed">
+                          <span className={`w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0 ${dev.iconColor.replace('text-', 'bg-')}`} />
+                          <span>{p}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA — full width */}
+        <section className="py-20 px-8 bg-gradient-to-br from-gold-bg to-bg-cream border-y border-gold/30">
+          <div className="w-full text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-text-dark mb-4">
+              Ready to Take Control of Your Study Sessions?
+            </h2>
+            <p className="text-text-slate mb-8 text-lg">
+              Start learning with KIKO AI and turn your study time into focused study time.
+            </p>
+            <Link to="/register" className="btn-primary inline-flex items-center gap-2 text-base px-8 py-3">
               Get Started Free <ArrowRight size={18} />
             </Link>
           </div>
         </section>
 
-        {/* FAQ */}
-        <section id="faq" className="py-20 px-6 max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <span className="text-sm font-semibold text-gold uppercase tracking-wider">FAQ</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-text-dark mt-2">Frequently Asked Questions</h2>
-          </div>
-          <div className="space-y-4">
-            {[
-              { q: 'What is KIKO AI?', a: 'KIKO AI is an intelligent study companion that combines AI-powered learning assistance with real-time focus monitoring and study analytics.' },
-              { q: 'How does KIKO detect distractions?', a: 'MindGuard analyzes your browsing activity, website context, and study goal to determine if you\'re staying focused or getting distracted.' },
-              { q: 'Does KIKO block websites?', a: 'No. KIKO guides you back to focus rather than blocking websites. It understands the difference between educational and distracting content.' },
-              { q: 'Can I use YouTube for studying?', a: 'Absolutely. YouTube tutorials are recognized as relevant content when they match your study goal.' },
-              { q: 'Is my data secure?', a: 'Yes. All passwords are hashed, APIs are authenticated, and your data belongs only to you.' },
-            ].map((faq, i) => (
-              <div key={i} className="card p-5">
-                <h4 className="font-semibold text-text-dark">{faq.q}</h4>
-                <p className="text-text-slate text-sm mt-1">{faq.a}</p>
-              </div>
-            ))}
+        {/* FAQ — full width */}
+        <section id="faq" className="py-20 px-8">
+          <div className="w-full">
+            <div className="text-center mb-12">
+              <span className="text-sm font-semibold text-gold uppercase tracking-wider">FAQ</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-text-dark mt-2">Frequently Asked Questions</h2>
+            </div>
+            <div className="space-y-4 max-w-3xl mx-auto">
+              {[
+                { q: 'What is KIKO AI?', a: 'KIKO AI is an intelligent study companion that combines AI-powered learning assistance with real-time focus monitoring and study analytics.' },
+                { q: 'How does KIKO detect distractions?', a: 'MindGuard analyzes your browsing activity, website context, and study goal to determine if you\'re staying focused or getting distracted.' },
+                { q: 'Does KIKO block websites?', a: 'No. KIKO guides you back to focus rather than blocking websites. It understands the difference between educational and distracting content. You can optionally add sites to a custom blocklist.' },
+                { q: 'Can I use YouTube for studying?', a: 'Absolutely. YouTube tutorials are recognized as relevant content when they match your study goal.' },
+                { q: 'Is my data secure?', a: 'Yes. All passwords are hashed with bcrypt, APIs are JWT-authenticated, and your data belongs only to you.' },
+              ].map((faq, i) => (
+                <div key={i} className="card p-5">
+                  <h4 className="font-semibold text-text-dark">{faq.q}</h4>
+                  <p className="text-text-slate text-sm mt-1">{faq.a}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="border-t border-border bg-bg-white py-10 px-6">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-text-muted text-sm">
+        {/* Footer — full width */}
+        <footer className="border-t border-border bg-bg-white py-10 px-8">
+          <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4 text-text-muted text-sm">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-[10px]">K</span>
@@ -288,6 +372,7 @@ export default function Landing() {
             <div className="flex gap-6">
               <button onClick={() => scrollToSection('features')} className="hover:text-primary transition">Features</button>
               <button onClick={() => scrollToSection('how-it-works')} className="hover:text-primary transition">How It Works</button>
+              <button onClick={() => scrollToSection('developers')} className="hover:text-primary transition">Team</button>
               <button onClick={() => scrollToSection('faq')} className="hover:text-primary transition">FAQ</button>
             </div>
             <div>© 2026 KIKO AI</div>
