@@ -8,6 +8,8 @@ from app.models.session import StudySession, SessionStatus
 from app.models.behavior import BehaviorEvent
 from app.engines import focus_engine
 from app.schemas.mindguard import ActivityItem
+from app.models.blocked_website import BlockedWebsite
+from app.schemas.mindguard import BlockedWebsiteCreate
 
 
 EXTENSION_HEARTBEAT_SECONDS = 90  # extension considered connected if event < 90s old
@@ -95,9 +97,12 @@ async def process_activity_batch(
             scroll_events=item.scroll_events,
             mouse_events=item.mouse_events,
             keyboard_events=item.keyboard_events,
-            is_distracting=(classification["classification"] == "distracting"),
-            distraction_reason=classification["reason"],
-            focus_state=classification["focus_state"],
+            is_distracting=(classification["classification"] == "distracting") or item.was_blocked,
+            distraction_reason=(
+                "Blocked by MindGuard" if item.was_blocked else classification["reason"]
+            ),
+            focus_state="distracted" if item.was_blocked else classification["focus_state"],
+            was_blocked=item.was_blocked,
         )
         db.add(event)
 
@@ -303,3 +308,58 @@ async def get_extension_status(db: AsyncSession, user_id: int) -> dict:
         "active_session_id": session.id,
         "version": "1.0",
     }
+
+# ─── Blocked Websites ───
+
+def _normalize_domain(d: str) -> str:
+    d = (d or "").strip().lower()
+    if d.startswith("http://"): d = d[7:]
+    if d.startswith("https://"): d = d[8:]
+    if d.startswith("www."): d = d[4:]
+    return d.split("/")[0].split(":")[0]
+
+
+async def list_blocked_websites(db: AsyncSession, user_id: int) -> list[BlockedWebsite]:
+    result = await db.execute(
+        select(BlockedWebsite)
+        .where(BlockedWebsite.user_id == user_id)
+        .order_by(BlockedWebsite.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
+async def add_blocked_website(
+    db: AsyncSession, user_id: int, data: BlockedWebsiteCreate
+) -> BlockedWebsite:
+    domain = _normalize_domain(data.domain)
+    if not domain or "." not in domain:
+        raise HTTPException(status_code=400, detail="Enter a valid domain (e.g. instagram.com)")
+
+    # Check duplicate
+    existing = await db.execute(
+        select(BlockedWebsite).where(
+            and_(BlockedWebsite.user_id == user_id, BlockedWebsite.domain == domain)
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="This website is already blocked.")
+
+    site = BlockedWebsite(user_id=user_id, domain=domain)
+    db.add(site)
+    await db.commit()
+    await db.refresh(site)
+    return site
+
+
+async def delete_blocked_website(db: AsyncSession, user_id: int, site_id: int) -> bool:
+    result = await db.execute(
+        select(BlockedWebsite).where(
+            and_(BlockedWebsite.id == site_id, BlockedWebsite.user_id == user_id)
+        )
+    )
+    site = result.scalar_one_or_none()
+    if not site:
+        raise HTTPException(status_code=404, detail="Blocked website not found")
+    await db.delete(site)
+    await db.commit()
+    return True

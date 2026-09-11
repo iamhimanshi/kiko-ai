@@ -29,6 +29,7 @@ class BehaviorEvent(Base):
     is_distracting = Column(Boolean, default=False)
     distraction_reason = Column(String, nullable=True)
     focus_state = Column(String, nullable=True)
+    was_blocked = Column(Boolean, default=False)
 
     # Timestamp
     recorded_at = Column(DateTime(timezone=True), server_default=func.now())

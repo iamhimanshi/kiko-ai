@@ -5,7 +5,7 @@ from uuid import uuid4
 from fastapi import HTTPException, status
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm.attributes import flag_modified
+
 from app.models.session import StudySession, SessionStatus
 from app.schemas.session import SessionCreate
 
@@ -58,20 +58,24 @@ async def create_session(
     now = _now()
 
     session = StudySession(
-    user_id=user_id,
-    subject=data.subject,
-    goal=data.goal,
-    duration_minutes=data.duration_minutes,
-    mode=data.mode,
-    work_duration_minutes=data.work_duration_minutes if data.mode == "pomodoro" else None,
-    break_duration_minutes=data.break_duration_minutes if data.mode == "pomodoro" else None,
-    tasks=tasks,
-    status=SessionStatus.ACTIVE.value,
-    started_at=now,
-    paused_duration_seconds=0,
-    completed_tasks=0,
-    total_tasks=len(tasks),
-)
+        user_id=user_id,
+        subject=data.subject,
+        goal=data.goal,
+        duration_minutes=data.duration_minutes,
+        mode=data.mode,
+        work_duration_minutes=(
+            data.work_duration_minutes if data.mode == "pomodoro" else None
+        ),
+        break_duration_minutes=(
+            data.break_duration_minutes if data.mode == "pomodoro" else None
+        ),
+        tasks=tasks,
+        status=SessionStatus.ACTIVE.value,
+        started_at=now,
+        paused_duration_seconds=0,
+        completed_tasks=0,
+        total_tasks=len(tasks),
+    )
     db.add(session)
     await db.commit()
     await db.refresh(session)
@@ -157,7 +161,17 @@ async def end_session(
 
     await db.commit()
     await db.refresh(session)
+
+    # ─── Generate AI insight (best-effort, non-blocking) ───
+    try:
+        from app.services import analytics_service  # local import to avoid cycles
+        await analytics_service.generate_and_store_insight(db, session)
+        await db.refresh(session)
+    except Exception as e:
+        print(f"[insight generation failed] {e}")
+
     return session
+
 
 async def toggle_task(
     db: AsyncSession, session_id: int, user_id: int, task_id: str
@@ -186,8 +200,10 @@ async def toggle_task(
 
     session.tasks = tasks
     session.completed_tasks = sum(1 for t in tasks if t.get("is_completed"))
-    # Force SQLAlchemy to persist JSON change
+
+    from sqlalchemy.orm.attributes import flag_modified
     flag_modified(session, "tasks")
+
     await db.commit()
     await db.refresh(session)
     return session

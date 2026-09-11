@@ -73,6 +73,16 @@ export const mindguardApi = {
   live: () => api.get('/mindguard/live'),
   extensionStatus: () => api.get('/mindguard/extension-status'),
   sendActivity: (data) => api.post('/mindguard/activity', data),
+  listBlocked: () => api.get('/mindguard/blocked-websites'),
+  addBlocked: (domain) => api.post('/mindguard/blocked-websites', { domain }),
+  deleteBlocked: (id) => api.delete(`/mindguard/blocked-websites/${id}`),
+};
+
+export const analyticsApi = {
+  overview: (range = '7d') => api.get(`/analytics/overview?range=${range}`),
+  focusTrends: (range = '7d') => api.get(`/analytics/focus-trends?range=${range}`),
+  topDistracting: (range = '7d') => api.get(`/analytics/top-distracting?range=${range}`),
+  sessionReport: (id) => api.get(`/analytics/session/${id}/report`),
 };
 
 

@@ -13,6 +13,7 @@ class ActivityItem(BaseModel):
     mouse_events: int = 0
     keyboard_events: int = 0
     scroll_events: int = 0
+    was_blocked: bool = False 
 
 
 class ActivityBatchRequest(BaseModel):
@@ -91,3 +92,17 @@ class ExtensionStatusResponse(BaseModel):
     last_seen_at: Optional[datetime] = None
     active_session_id: Optional[int] = None
     version: str = "1.0"
+
+# ─── Blocked Websites ───
+class BlockedWebsiteCreate(BaseModel):
+    domain: str = Field(..., min_length=3, max_length=253)
+
+
+class BlockedWebsiteResponse(BaseModel):
+    id: int
+    domain: str
+    created_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
