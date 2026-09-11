@@ -19,5 +19,11 @@
   "action": {
     "default_popup": "popup/popup.html",
     "default_title": "KIKO AI"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["blocked/blocked.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

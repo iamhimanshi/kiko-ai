@@ -13,6 +13,7 @@ import SessionComplete from './pages/SessionComplete';
 import Assistant from './pages/Assistant';
 import MindGuard from './pages/MindGuard';
 import Analytics from './pages/Analytics';
+import SessionReportAnalytics from './pages/SessionReportAnalytics';
 
 function App() {
   return (
@@ -38,6 +39,11 @@ function App() {
           <Route path="/assistant" element={<ProtectedRoute><Assistant /></ProtectedRoute>} />
 
           <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+
+          <Route
+  path="/analytics/session/:sessionId"
+  element={<ProtectedRoute><SessionReportAnalytics /></ProtectedRoute>}
+/>
 
           {/* MindGuard */}
           <Route path="/mindguard" element={<ProtectedRoute><MindGuard /></ProtectedRoute>} />

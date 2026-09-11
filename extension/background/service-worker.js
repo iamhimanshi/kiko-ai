@@ -5,13 +5,14 @@
 const API_BASE = "http://localhost:8000";
 const HEARTBEAT_MS = 30 * 1000;
 const SESSION_POLL_MS = 15 * 1000;
-const MIN_FLUSH_GAP_MS = 3 * 1000;         // don't flush twice within 3s
+const MIN_FLUSH_GAP_MS = 3 * 1000;
 const SKIP_HOSTS = ["localhost", "127.0.0.1"];
 
 const state = {
   token: null,
   session: null,
   currentTab: null,
+  blockedDomains: [],
   heartbeatTimer: null,
   sessionTimer: null,
   lastInterventionLevel: 0,
@@ -26,6 +27,7 @@ async function boot() {
   state.token = token || null;
   if (!state.token) { setBadge("", "#6B7280"); return; }
   await refreshSession();
+  await refreshBlocked();
   startTimers();
 }
 
@@ -33,7 +35,10 @@ function startTimers() {
   if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
   if (state.sessionTimer) clearInterval(state.sessionTimer);
   state.heartbeatTimer = setInterval(onHeartbeat, HEARTBEAT_MS);
-  state.sessionTimer = setInterval(refreshSession, SESSION_POLL_MS);
+  state.sessionTimer = setInterval(async () => {
+    await refreshSession();
+    await refreshBlocked();
+  }, SESSION_POLL_MS);
 }
 
 // ─── HTTP ───────────────────────────────────────────────
@@ -71,6 +76,7 @@ async function clearAuth() {
   state.token = null;
   state.session = null;
   state.currentTab = null;
+  state.blockedDomains = [];
   setBadge("", "#6B7280");
   if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
   if (state.sessionTimer) clearInterval(state.sessionTimer);
@@ -113,6 +119,20 @@ async function refreshSession() {
   }
 }
 
+// ─── Blocked list ───────────────────────────────────────
+async function refreshBlocked() {
+  const list = await apiGet("/mindguard/blocked-websites");
+  state.blockedDomains = Array.isArray(list) ? list.map((b) => b.domain) : [];
+}
+
+function findBlockedMatch(url) {
+  const domain = normalizeDomain(url);
+  if (!domain) return null;
+  return state.blockedDomains.find(
+    (b) => domain === b || domain.endsWith("." + b)
+  ) || null;
+}
+
 // ─── Tab tracking ───────────────────────────────────────
 function normalizeDomain(url) {
   try {
@@ -131,7 +151,6 @@ async function startTrackingActiveTab() {
   if (!tab || !tab.url) { state.currentTab = null; return; }
   if (!/^https?:/.test(tab.url)) { state.currentTab = null; return; }
   if (isSkippedHost(tab.url)) { state.currentTab = null; return; }
-
   state.currentTab = {
     url: tab.url,
     title: tab.title || "",
@@ -204,9 +223,42 @@ function showInterventionNotification(result) {
   } catch (_) {}
 }
 
+// ─── Blocking ───────────────────────────────────────────
+async function enforceBlock(tabId, url) {
+  if (!state.session || state.session.status !== "ACTIVE") return false;
+  if (!url || !/^https?:/.test(url)) return false;
+  if (isSkippedHost(url)) return false;
+
+  const matched = findBlockedMatch(url);
+  if (!matched) return false;
+
+  // Log the blocked attempt
+  apiPost("/mindguard/activity", {
+    session_id: state.session.id,
+    activities: [{
+      url,
+      page_title: "",
+      time_spent_seconds: 0,
+      was_blocked: true,
+    }],
+  });
+
+  // Redirect to focus screen
+  const blockedUrl = chrome.runtime.getURL(
+    `blocked/blocked.html?domain=${encodeURIComponent(matched)}`
+  );
+  chrome.tabs.update(tabId, { url: blockedUrl });
+  return true;
+}
+
 // ─── Event handlers ─────────────────────────────────────
 async function onTabActivated() {
   await flushCurrentActivity("tab_switch");
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  if (tab && tab.url) {
+    const blocked = await enforceBlock(tab.id, tab.url);
+    if (blocked) return;
+  }
   await startTrackingActiveTab();
 }
 
@@ -218,6 +270,8 @@ async function onTabUpdated(tabId, changeInfo, tab) {
     state.currentTab.title = changeInfo.title;
   }
   if (changeInfo.url) {
+    const blocked = await enforceBlock(tabId, changeInfo.url);
+    if (blocked) return;
     if (isSkippedHost(changeInfo.url)) {
       state.currentTab = null;
       return;
@@ -257,7 +311,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     sendResponse({ session: state.session, currentTab: state.currentTab, hasToken: !!state.token });
     return true;
   }
-  if (msg.type === "REFRESH_SESSION") { refreshSession().then(() => sendResponse({ ok: true })); return true; }
+  if (msg.type === "REFRESH_SESSION") {
+    Promise.all([refreshSession(), refreshBlocked()]).then(() => sendResponse({ ok: true }));
+    return true;
+  }
 });
 
 chrome.runtime.onStartup.addListener(boot);
