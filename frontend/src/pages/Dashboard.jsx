@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import { sessionApi, analyticsApi } from '../services/api';
 import {
   Plus, Clock, Target, Zap, Calendar, ArrowRight,
-  TrendingUp, Activity, PlayCircle, Loader2, Globe, CheckCircle,
+  TrendingUp, Activity, PlayCircle, Loader2, Globe, Sparkles,
 } from 'lucide-react';
 
 function fmtDuration(seconds) {
@@ -62,10 +62,8 @@ export default function Dashboard() {
   const greeting = new Date().getHours() < 12
     ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening';
 
-  // Pick latest session with ai_insights
   const latestInsight = recentSessions.find((s) => s.ai_insights)?.ai_insights;
 
-  // Focus snapshot — derived from today's data
   const longestFocus = today?.longest_focus_seconds || 0;
   const distractionCount = today?.distraction_count || 0;
   const topDistracting = today?.top_distracting?.[0]?.domain || null;
@@ -74,31 +72,31 @@ export default function Dashboard() {
     : 0;
 
   return (
-    <div className="flex min-h-screen bg-[#F8F7F2]">
+    <div className="flex min-h-screen bg-[#FFF8F5]">
       <Sidebar />
 
       <main className="flex-1 p-8 overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-[#1F2937]">
-              Good {greeting}, {user?.full_name || user?.username} 👋
+            <h1 className="text-2xl font-extrabold text-[#172033]">
+              Good {greeting}, {user?.full_name || user?.username}
             </h1>
-            <p className="text-[#4B5563] text-sm">
+            <p className="text-[#64748B] text-sm mt-0.5">
               {active
                 ? 'You have an active session in progress.'
-                : 'Ready to make your next study session count?'}
+                : 'Ready to dive deeply into today’s study goals?'}
             </p>
           </div>
 
           {loading ? (
-            <div className="bg-[#EDF4EE] text-[#6B7280] px-5 py-2.5 rounded-[14px] font-medium text-sm">
-              <Loader2 size={14} className="inline animate-spin mr-1" /> Loading
+            <div className="bg-white border border-[#E2E8F0] text-[#64748B] px-5 py-2.5 rounded-[14px] font-medium text-sm">
+              <Loader2 size={14} className="inline animate-spin mr-1.5" /> Loading
             </div>
           ) : active ? (
             <Link
               to={`/study-session/active/${active.id}`}
-              className="bg-[#D4A64A] hover:bg-[#C9962E] text-white px-5 py-2.5 rounded-[14px] font-medium transition flex items-center gap-2 shadow-[0px_4px_12px_rgba(212,166,74,0.3)]"
+              className="btn-primary flex items-center gap-2"
             >
               <PlayCircle size={18} />
               Resume Session
@@ -106,7 +104,7 @@ export default function Dashboard() {
           ) : (
             <Link
               to="/study-session/setup"
-              className="bg-[#1B4332] hover:bg-[#24543F] text-white px-5 py-2.5 rounded-[14px] font-medium transition flex items-center gap-2"
+              className="btn-primary flex items-center gap-2"
             >
               <Plus size={18} />
               Start Study Session
@@ -118,27 +116,27 @@ export default function Dashboard() {
         {active && !loading && (
           <Link
             to={`/study-session/active/${active.id}`}
-            className="block bg-gradient-to-br from-[#FFF8E8] to-[#FFF3D6] border border-[#D4A64A]/40 rounded-[18px] p-5 mb-6 hover:shadow-[0px_4px_12px_rgba(212,166,74,0.15)] transition"
+            className="block bg-[#172554] text-white border border-[#1E3A8A] rounded-[18px] p-5 mb-6 hover:shadow-[0px_10px_28px_rgba(23,37,84,0.18)] transition"
           >
             <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-[#D4A64A] rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 bg-[#FF5C5C] rounded-xl flex items-center justify-center flex-shrink-0">
                   <PlayCircle className="text-white" size={20} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="text-[#4D3A11] font-semibold text-sm">
+                    <p className="text-white font-semibold text-sm">
                       Active Session in Progress
                     </p>
-                    <span className="bg-[#D4A64A]/20 text-[#4D3A11] text-[10px] font-medium px-2 py-0.5 rounded-full">
+                    <span className="bg-[#FFD166] text-[#172033] text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
                       {active.status}
                     </span>
                   </div>
-                  <p className="text-[#4D3A11] text-sm font-medium">{active.subject}</p>
-                  <p className="text-[#6B7280] text-xs mt-0.5">{active.goal}</p>
+                  <p className="text-[#DBEAFE] text-sm font-medium">{active.subject}</p>
+                  <p className="text-[#93C5FD] text-xs mt-0.5">{active.goal}</p>
                 </div>
               </div>
-              <ArrowRight className="text-[#D4A64A] flex-shrink-0 mt-2" size={20} />
+              <ArrowRight className="text-[#FF8A65] flex-shrink-0 mt-2" size={20} />
             </div>
           </Link>
         )}
@@ -150,37 +148,37 @@ export default function Dashboard() {
               icon: Clock, label: 'Study Time',
               value: fmtDuration(today?.total_study_seconds),
               sub: 'Today',
-              iconBg: 'bg-[#EEF7F0]', iconColor: 'text-[#1B4332]',
+              iconBg: 'bg-[#172554]', iconColor: 'text-white',
             },
             {
               icon: Target, label: 'Focus Score',
               value: today?.has_data ? `${today.focus_score}%` : '—',
               sub: today?.has_data ? (today.focus_score >= 80 ? 'Excellent' : today.focus_score >= 60 ? 'Good' : 'Keep going') : 'No sessions yet',
-              iconBg: 'bg-[#EAF8EC]', iconColor: 'text-[#2E7D32]',
+              iconBg: 'bg-[#ECFDF5]', iconColor: 'text-[#22C55E]',
             },
             {
               icon: Zap, label: 'Distraction',
               value: fmtDuration(today?.total_distracted_seconds),
               sub: `${distractionCount} events`,
-              iconBg: 'bg-[#FFF8E8]', iconColor: 'text-[#D4A64A]',
+              iconBg: 'bg-[#FFFBEB]', iconColor: 'text-[#172033]',
             },
             {
               icon: Calendar, label: 'Sessions',
               value: `${today?.completed_sessions || 0}`,
               sub: today?.sessions_count > 0 ? `of ${today.sessions_count} today` : 'Completed',
-              iconBg: 'bg-[#EDF4EE]', iconColor: 'text-[#1B4332]',
+              iconBg: 'bg-[#FFF0EB]', iconColor: 'text-[#FF5C5C]',
             },
           ].map((stat, i) => {
             const Icon = stat.icon;
             return (
-              <div key={i} className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
+              <div key={i} className="card p-6">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1">
-                    <p className="text-[#6B7280] text-sm">{stat.label}</p>
-                    <p className="text-2xl font-bold text-[#1F2937] mt-1">{stat.value}</p>
-                    <p className="text-[#9CA3AF] text-xs mt-1">{stat.sub}</p>
+                    <p className="text-[#64748B] text-sm font-medium">{stat.label}</p>
+                    <p className="text-3xl font-extrabold text-[#172033] mt-1">{stat.value}</p>
+                    <p className="text-[#64748B] text-xs mt-1">{stat.sub}</p>
                   </div>
-                  <div className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 ${stat.iconBg}`}>
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${stat.iconBg}`}>
                     <Icon className={stat.iconColor} size={22} />
                   </div>
                 </div>
@@ -193,42 +191,42 @@ export default function Dashboard() {
         <div className="grid lg:grid-cols-3 gap-6 mb-6">
           {/* Recent Sessions */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
+            <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-[#1F2937]">Recent Sessions</h2>
-                <Link to="/analytics" className="text-[#1B4332] text-sm font-medium hover:underline flex items-center gap-1">
+                <h2 className="text-lg font-bold text-[#172033]">Recent Sessions</h2>
+                <Link to="/analytics" className="text-[#FF5C5C] text-sm font-semibold hover:text-[#E64848] flex items-center gap-1 transition">
                   View All <ArrowRight size={14} />
                 </Link>
               </div>
               {loading ? (
-                <div className="text-center py-6 text-[#6B7280] text-sm">Loading...</div>
+                <div className="text-center py-6 text-[#64748B] text-sm">Loading...</div>
               ) : recentSessions.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="text-4xl mb-3">🚀</div>
-                  <p className="text-[#6B7280] text-sm">No sessions yet</p>
-                  <Link to="/study-session/setup" className="text-[#1B4332] text-sm font-medium hover:underline mt-2 inline-block">
-                    Start your first session
+                  <p className="text-[#64748B] text-sm mb-3">No study sessions recorded yet.</p>
+                  <Link to="/study-session/setup" className="btn-primary text-sm inline-flex items-center gap-2">
+                    <Plus size={16} /> Start your first session
                   </Link>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {recentSessions.slice(0, 4).map((s) => (
                     <button
                       key={s.id}
+                      type="button"
                       onClick={() => navigate(`/analytics/session/${s.id}`)}
-                      className="w-full flex items-center justify-between p-4 bg-[#F8F7F2] rounded-[14px] hover:bg-[#EEF7F0] transition text-left group"
+                      className="w-full flex items-center justify-between p-4 bg-[#FFF8F5] border border-transparent rounded-[14px] hover:bg-[#FFF0EB] hover:border-[#FED7AA] transition text-left group"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-[#1F2937] text-sm truncate">{s.subject}</p>
-                        <div className="flex items-center gap-3 text-[#6B7280] text-xs mt-1">
+                        <p className="font-semibold text-[#172033] text-sm truncate">{s.subject}</p>
+                        <div className="flex items-center gap-3 text-[#64748B] text-xs mt-1">
                           <span>{Math.floor((s.actual_duration_seconds || 0) / 60)} min</span>
-                          <span className="w-1 h-1 bg-[#E8ECE7] rounded-full"></span>
+                          <span className="w-1 h-1 bg-[#FED7AA] rounded-full"></span>
                           <span>{fmtDate(s.ended_at || s.created_at)}</span>
-                          <span className="w-1 h-1 bg-[#E8ECE7] rounded-full"></span>
+                          <span className="w-1 h-1 bg-[#FED7AA] rounded-full"></span>
                           <span>{s.completed_tasks}/{s.total_tasks} tasks</span>
                         </div>
                       </div>
-                      <ArrowRight size={16} className="text-[#9CA3AF] group-hover:text-[#1B4332] transition" />
+                      <ArrowRight size={16} className="text-[#64748B] group-hover:text-[#FF5C5C] transition" />
                     </button>
                   ))}
                 </div>
@@ -237,12 +235,12 @@ export default function Dashboard() {
           </div>
 
           {/* Focus Overview (weekly) */}
-          <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
-            <h2 className="text-lg font-semibold text-[#1F2937] mb-4">Focus Overview</h2>
+          <div className="card p-6">
+            <h2 className="text-lg font-bold text-[#172033] mb-4">Focus Overview</h2>
             {loading ? (
-              <div className="text-center py-6 text-[#6B7280] text-sm">Loading...</div>
+              <div className="text-center py-6 text-[#64748B] text-sm">Loading...</div>
             ) : !week?.has_data ? (
-              <p className="text-[#9CA3AF] text-sm text-center py-6">
+              <p className="text-[#64748B] text-sm text-center py-6">
                 Complete sessions to see your weekly trend.
               </p>
             ) : (
@@ -261,12 +259,12 @@ export default function Dashboard() {
                       const label = new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' });
                       return (
                         <div key={d.date} className="flex items-center gap-3">
-                          <span className="text-[#6B7280] text-xs w-8">{label}</span>
-                          <div className="flex-1 h-5 bg-[#F8F7F2] rounded-md overflow-hidden flex">
-                            <div className="bg-[#2E7D32]" style={{ width: `${fw}%` }} />
-                            <div className="bg-[#D14343]" style={{ width: `${dw}%` }} />
+                          <span className="text-[#64748B] text-xs font-medium w-8">{label}</span>
+                          <div className="flex-1 h-5 bg-[#FFF8F5] border border-[#E2E8F0] rounded-md overflow-hidden flex">
+                            <div className="bg-[#22C55E]" style={{ width: `${fw}%` }} />
+                            <div className="bg-[#FF5C5C]" style={{ width: `${dw}%` }} />
                           </div>
-                          <span className="text-[#4B5563] text-xs w-10 text-right">
+                          <span className="text-[#172033] text-xs font-semibold w-10 text-right">
                             {total ? fmtDuration(total) : '—'}
                           </span>
                         </div>
@@ -282,71 +280,76 @@ export default function Dashboard() {
         {/* Focus Snapshot + AI Insight */}
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Focus Snapshot */}
-          <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
-            <h2 className="text-lg font-semibold text-[#1F2937] mb-4">Your Focus Snapshot</h2>
+          <div className="card p-6">
+            <h2 className="text-lg font-bold text-[#172033] mb-4">Your Focus Snapshot</h2>
             {loading ? (
-              <div className="text-center py-6 text-[#6B7280] text-sm">Loading...</div>
+              <div className="text-center py-6 text-[#64748B] text-sm">Loading...</div>
             ) : !today?.has_data ? (
-              <p className="text-[#9CA3AF] text-sm text-center py-6">
+              <p className="text-[#64748B] text-sm text-center py-6">
                 Complete a session to see your focus snapshot.
               </p>
             ) : (
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#EAF8EC] rounded-[14px] p-4">
-                  <TrendingUp size={16} className="text-[#2E7D32] mb-2" />
-                  <p className="text-xl font-bold text-[#1F2937]">
+                <div className="bg-[#ECFDF5] rounded-[14px] p-4">
+                  <TrendingUp size={16} className="text-[#22C55E] mb-2" />
+                  <p className="text-xl font-extrabold text-[#172033]">
                     {Math.floor(longestFocus / 60)} min
                   </p>
-                  <p className="text-[#4B5563] text-xs">Longest Focus</p>
+                  <p className="text-[#64748B] text-xs font-medium">Longest Focus</p>
                 </div>
-                <div className="bg-[#FFF8E8] rounded-[14px] p-4">
-                  <Zap size={16} className="text-[#D4A64A] mb-2" />
-                  <p className="text-xl font-bold text-[#1F2937]">{distractionCount}</p>
-                  <p className="text-[#4B5563] text-xs">Distractions</p>
+                <div className="bg-[#FFFBEB] rounded-[14px] p-4">
+                  <Zap size={16} className="text-[#172033] mb-2" />
+                  <p className="text-xl font-extrabold text-[#172033]">{distractionCount}</p>
+                  <p className="text-[#64748B] text-xs font-medium">Distractions</p>
                 </div>
-                <div className="bg-[#F8F7F2] rounded-[14px] p-4">
-                  <Clock size={16} className="text-[#1B4332] mb-2" />
-                  <p className="text-xl font-bold text-[#1F2937]">
+                <div className="bg-[#FFF8F5] border border-[#E2E8F0] rounded-[14px] p-4">
+                  <Clock size={16} className="text-[#172554] mb-2" />
+                  <p className="text-xl font-extrabold text-[#172033]">
                     {Math.floor(avgFocus / 60)} min
                   </p>
-                  <p className="text-[#4B5563] text-xs">Avg Focus Period</p>
+                  <p className="text-[#64748B] text-xs font-medium">Avg Focus Period</p>
                 </div>
-                <div className="bg-[#FDECEC] rounded-[14px] p-4">
-                  <Globe size={16} className="text-[#D14343] mb-2" />
-                  <p className="text-sm font-bold text-[#1F2937] truncate">
+                <div className="bg-[#FFF0EB] rounded-[14px] p-4">
+                  <Globe size={16} className="text-[#FF5C5C] mb-2" />
+                  <p className="text-sm font-bold text-[#172033] truncate">
                     {topDistracting || '—'}
                   </p>
-                  <p className="text-[#4B5563] text-xs">Top Distraction</p>
+                  <p className="text-[#64748B] text-xs font-medium">Top Distraction</p>
                 </div>
               </div>
             )}
           </div>
 
           {/* AI Insight */}
-          <div className="bg-[#FFF8E8] border border-[#D4A64A]/30 rounded-[18px] p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Activity size={18} className="text-[#D4A64A]" />
-              <h2 className="text-lg font-semibold text-[#4D3A11]">Recent Insight</h2>
+          <div className="bg-[#FFFBEB] border border-[#FED7AA] rounded-[18px] p-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Activity size={18} className="text-[#FF5C5C]" />
+                <h2 className="text-lg font-bold text-[#172033]">Recent Insight</h2>
+              </div>
+              <span className="inline-flex items-center gap-1 bg-[#FFD166] text-[#172033] text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
+                <Sparkles size={10} /> AI
+              </span>
             </div>
             {loading ? (
-              <div className="text-center py-6 text-[#6B7280] text-sm">Loading...</div>
+              <div className="text-center py-6 text-[#64748B] text-sm">Loading...</div>
             ) : latestInsight ? (
               <>
-                <p className="text-[#4B5563] text-sm leading-relaxed whitespace-pre-wrap line-clamp-5">
+                <p className="text-[#475569] text-sm leading-relaxed whitespace-pre-wrap line-clamp-5">
                   {latestInsight.length > 280
                     ? latestInsight.slice(0, 280) + '…'
                     : latestInsight}
                 </p>
                 <Link
-                  to={`/analytics`}
-                  className="text-[#1B4332] text-sm font-medium hover:underline mt-3 inline-flex items-center gap-1"
+                  to="/analytics"
+                  className="text-[#FF5C5C] text-sm font-semibold hover:text-[#E64848] mt-3 inline-flex items-center gap-1 transition"
                 >
                   View full report <ArrowRight size={14} />
                 </Link>
               </>
             ) : (
-              <p className="text-[#4B5563] text-sm leading-relaxed">
-                💡 Complete a few study sessions to receive personalized focus insights.
+              <p className="text-[#475569] text-sm leading-relaxed">
+                Complete a few study sessions to receive personalized focus insights from Daydive.
               </p>
             )}
           </div>

@@ -31,64 +31,79 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-64 h-screen sticky top-0 bg-[#163020] flex flex-col flex-shrink-0 overflow-y-auto">
+    <aside className="w-64 h-screen sticky top-0 bg-[#172554] flex flex-col flex-shrink-0 overflow-y-auto border-r border-[#1E3A8A]">
       {/* Logo */}
-      <div className="p-6 border-b border-[#2C493A]">
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#1B4332] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">K</span>
+      <div className="p-6 border-b border-[#1E3A8A]">
+        <Link to="/dashboard" className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-[#1E3A8A] rounded-lg flex items-center justify-center">
+            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M4 15C6.5 12.5 9.5 12.5 12 15C14.5 17.5 17.5 17.5 20 15"
+                stroke="#FF5C5C"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+              />
+              <path
+                d="M6 9.5C8 7.5 10.5 7.5 12 9.5C13.5 11.5 16 11.5 18 9.5"
+                stroke="#FFFFFF"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              />
+            </svg>
           </div>
-          <span className="text-xl font-bold text-white">KIKO</span>
-          <span className="text-xs font-medium text-[#D4A64A] bg-[#FFF8E8]/10 px-2 py-0.5 rounded-full">AI</span>
+          <span className="text-xl font-extrabold tracking-tight text-white">
+            Day<span className="text-[#FF5C5C]">dive</span>
+          </span>
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-6 space-y-1">
+      <nav className="flex-1 px-3 py-6 space-y-1.5">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path || 
-  (item.path === '/study-session' && location.pathname.startsWith('/study-session'));
-          
+          const isActive =
+            location.pathname === item.path ||
+            (item.path === '/study-session' && location.pathname.startsWith('/study-session'));
+
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all ${
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-[12px] transition-all ${
                 isActive
-                  ? 'bg-[#2E5A43] text-white'
-                  : 'text-[#C9D6CB] hover:text-white hover:bg-[#244535]'
+                  ? 'bg-[#FF5C5C] text-white shadow-[0px_4px_12px_rgba(255,92,92,0.3)]'
+                  : 'text-[#93C5FD] hover:text-white hover:bg-[#1E3A8A]'
               }`}
             >
-              <Icon size={20} className={isActive ? 'text-[#E6F2E7]' : ''} />
-              <span className="font-medium">{item.label}</span>
+              <Icon size={20} className={isActive ? 'text-white' : 'text-[#DBEAFE]'} />
+              <span className="font-medium text-sm">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
       {/* Bottom - Profile & Logout */}
-      <div className="p-4 border-t border-[#2C493A]">
-        <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#244535] transition cursor-pointer">
-          <div className="w-9 h-9 bg-[#2E5A43] rounded-full flex items-center justify-center">
-            <User size={18} className="text-[#E6F2E7]" />
+      <div className="p-4 border-t border-[#1E3A8A]">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-[12px] hover:bg-[#1E3A8A] transition cursor-pointer">
+          <div className="w-9 h-9 bg-[#1E3A8A] rounded-full flex items-center justify-center border border-[#3B82F6]/30">
+            <User size={18} className="text-[#DBEAFE]" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-medium truncate">
+            <p className="text-white text-sm font-semibold truncate">
               {user?.full_name || user?.username || 'User'}
             </p>
-            <p className="text-[#C9D6CB] text-xs">Student</p>
+            <p className="text-[#93C5FD] text-xs">Student</p>
           </div>
         </div>
         <button
+          type="button"
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[#C9D6CB] hover:text-white hover:bg-[#244535] transition mt-1"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-[12px] text-[#93C5FD] hover:text-white hover:bg-[#1E3A8A] transition mt-1.5 text-sm font-medium"
         >
-          <LogOut size={20} />
-          <span className="font-medium">Logout</span>
+          <LogOut size={18} />
+          <span>Logout</span>
         </button>
       </div>
     </aside>
   );
 }
-

@@ -2,8 +2,9 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   ArrowRight, Sparkles, Target, BarChart3, Shield, Zap,
-  BookOpen, Clock, TrendingUp, Menu, X, Code2, Database,
-  Brain, LineChart, Lock, Github, Linkedin, Mail
+  BookOpen, Clock, TrendingUp, Menu, X, Database,
+  Brain, LineChart, Lock, CheckCircle2, XCircle,
+  ChevronDown, Compass, Layers, Activity, MessageSquare
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -12,20 +13,22 @@ const DEVELOPERS = [
     name: 'Himanshi',
     role: 'Backend & Database Engineer',
     icon: Database,
-    iconBg: 'bg-[#EEF7F0]',
-    iconColor: 'text-[#1B4332]',
+    iconBg: 'bg-[#172554]',
+    iconColor: 'text-white',
+    dotColor: 'bg-[#172554]',
     points: [
       'Architected the FastAPI backend with PostgreSQL and SQLAlchemy',
       'Built authentication, REST APIs and session management',
-      'Designed the relational data model powering all KIKO features',
+      'Designed the relational data model powering all Daydive features',
     ],
   },
   {
     name: 'Kanika Gupta',
     role: 'Frontend and AI Models',
     icon: Brain,
-    iconBg: 'bg-[#FFF8E8]',
-    iconColor: 'text-[#D4A64A]',
+    iconBg: 'bg-[#FFF0EB]',
+    iconColor: 'text-[#FF5C5C]',
+    dotColor: 'bg-[#FF5C5C]',
     points: [
       'Integrated Groq LLM for summaries, flashcards, quizzes & AI Tutor',
       'Built the RAG pipeline with Sentence Transformers + FAISS',
@@ -36,8 +39,9 @@ const DEVELOPERS = [
     name: 'Rumana Khan',
     role: 'Analytics & Data Visualization',
     icon: LineChart,
-    iconBg: 'bg-[#EAF8EC]',
-    iconColor: 'text-[#2E7D32]',
+    iconBg: 'bg-[#ECFDF5]',
+    iconColor: 'text-[#22C55E]',
+    dotColor: 'bg-[#22C55E]',
     points: [
       'Developed the deterministic analytics engine for focus scoring',
       'Built focus timelines, distraction breakdowns and website activity',
@@ -48,8 +52,9 @@ const DEVELOPERS = [
     name: 'Gargi Pathak',
     role: 'Security & Research',
     icon: Lock,
-    iconBg: 'bg-[#FDECEC]',
-    iconColor: 'text-[#D14343]',
+    iconBg: 'bg-[#FFFBEB]',
+    iconColor: 'text-[#172033]',
+    dotColor: 'bg-[#FFD166]',
     points: [
       'Implemented JWT authentication and bcrypt password security',
       'Enforced ownership checks, input validation & secure API boundaries',
@@ -58,9 +63,73 @@ const DEVELOPERS = [
   },
 ];
 
+const PIPELINE_STEPS = [
+  { label: 'Plan', icon: Compass },
+  { label: 'Learn', icon: BookOpen },
+  { label: 'Focus', icon: Target },
+  { label: 'Detect', icon: Activity },
+  { label: 'Intervene', icon: Shield },
+  { label: 'Analyze', icon: BarChart3 },
+  { label: 'Improve', icon: TrendingUp },
+];
+
+const FAQS = [
+  {
+    q: 'What is Daydive?',
+    a: 'Daydive is an intelligent study companion built for diving deeply into daily goals—combining AI-powered learning assistance, real-time focus monitoring, and study analytics.',
+  },
+  {
+    q: 'How does Daydive detect distractions?',
+    a: 'MindGuard analyzes your browsing activity, website context, and active study goal to determine whether you are staying on-track or drifting into distractions.',
+  },
+  {
+    q: 'Does Daydive block websites?',
+    a: 'No. Daydive guides you back to focus rather than blindly blocking sites. It understands the difference between educational and distracting content, and you can optionally add sites to a custom blocklist.',
+  },
+  {
+    q: 'Can I use YouTube for studying?',
+    a: 'Absolutely. YouTube tutorials and lectures are recognized as relevant study activity whenever they match your current session goal.',
+  },
+  {
+    q: 'Is my data secure?',
+    a: 'Yes. Passwords are hashed with bcrypt, all APIs are JWT-authenticated, and your documents and session data belong strictly to you.',
+  },
+];
+
+function BrandLogo({ size = 'md' }) {
+  const boxSize = size === 'sm' ? 'w-7 h-7 rounded-lg' : 'w-9 h-9 rounded-xl';
+  const textSize = size === 'sm' ? 'text-base' : 'text-xl';
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className={`${boxSize} bg-[#172554] flex items-center justify-center shadow-sm relative overflow-hidden`}>
+        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M4 15C6.5 12.5 9.5 12.5 12 15C14.5 17.5 17.5 17.5 20 15"
+            stroke="#FF5C5C"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+          />
+          <path
+            d="M6 9.5C8 7.5 10.5 7.5 12 9.5C13.5 11.5 16 11.5 18 9.5"
+            stroke="#FFFFFF"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className={`${textSize} font-extrabold tracking-tight text-[#172554]`}>
+          Day<span className="text-[#FF5C5C]">dive</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openFaq, setOpenFaq] = useState(0);
 
   const scrollToSection = (id) => {
     const el = document.getElementById(id);
@@ -69,58 +138,55 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-cream">
-      {/* Navbar — full width */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-bg-white/90 backdrop-blur-sm border-b border-border/50">
-        <div className="w-full px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">K</span>
-            </div>
-            <span className="text-xl font-bold text-primary">KIKO</span>
-            <span className="text-xs font-medium text-gold bg-gold-bg px-2 py-0.5 rounded-full">AI</span>
-          </div>
+    <div className="min-h-screen bg-[#FFF8F5] text-[#172033]">
+      {/* Navbar */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#E2E8F0]">
+        <div className="max-w-7xl mx-auto px-6 md:px-8 py-3.5 flex items-center justify-between">
+          <Link to="/" className="focus:outline-none">
+            <BrandLogo />
+          </Link>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm text-text-slate">
-            <button onClick={() => scrollToSection('features')} className="hover:text-primary transition">Features</button>
-            <button onClick={() => scrollToSection('how-it-works')} className="hover:text-primary transition">How It Works</button>
-            <button onClick={() => scrollToSection('developers')} className="hover:text-primary transition">Team</button>
-            <button onClick={() => scrollToSection('faq')} className="hover:text-primary transition">FAQ</button>
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[#64748B]">
+            <button onClick={() => scrollToSection('features')} className="hover:text-[#172554] transition">Features</button>
+            <button onClick={() => scrollToSection('how-it-works')} className="hover:text-[#172554] transition">How It Works</button>
+            <button onClick={() => scrollToSection('developers')} className="hover:text-[#172554] transition">Team</button>
+            <button onClick={() => scrollToSection('faq')} className="hover:text-[#172554] transition">FAQ</button>
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <Link to="/dashboard" className="btn-primary">Dashboard</Link>
+              <Link to="/dashboard" className="btn-primary text-sm px-5 py-2.5">Dashboard</Link>
             ) : (
               <>
-                <Link to="/login" className="text-text-slate hover:text-primary px-3 py-2 text-sm font-medium transition">
+                <Link to="/login" className="text-[#172554] hover:text-[#FF5C5C] px-3 py-2 text-sm font-semibold transition">
                   Log In
                 </Link>
-                <Link to="/register" className="btn-primary">Get Started</Link>
+                <Link to="/register" className="btn-primary text-sm px-5 py-2.5">Get Started</Link>
               </>
             )}
           </div>
 
           <button
-            className="md:hidden text-text-dark"
+            className="md:hidden text-[#172554] p-1"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden bg-bg-white border-b border-border/50 px-8 py-4 space-y-3">
-            <button onClick={() => scrollToSection('features')} className="block w-full text-left text-text-slate hover:text-primary py-2 transition">Features</button>
-            <button onClick={() => scrollToSection('how-it-works')} className="block w-full text-left text-text-slate hover:text-primary py-2 transition">How It Works</button>
-            <button onClick={() => scrollToSection('developers')} className="block w-full text-left text-text-slate hover:text-primary py-2 transition">Team</button>
-            <button onClick={() => scrollToSection('faq')} className="block w-full text-left text-text-slate hover:text-primary py-2 transition">FAQ</button>
-            <div className="pt-3 border-t border-border flex flex-col gap-3">
+          <div className="md:hidden bg-white border-b border-[#E2E8F0] px-6 py-4 space-y-3">
+            <button onClick={() => scrollToSection('features')} className="block w-full text-left text-[#475569] hover:text-[#FF5C5C] font-medium py-2 transition">Features</button>
+            <button onClick={() => scrollToSection('how-it-works')} className="block w-full text-left text-[#475569] hover:text-[#FF5C5C] font-medium py-2 transition">How It Works</button>
+            <button onClick={() => scrollToSection('developers')} className="block w-full text-left text-[#475569] hover:text-[#FF5C5C] font-medium py-2 transition">Team</button>
+            <button onClick={() => scrollToSection('faq')} className="block w-full text-left text-[#475569] hover:text-[#FF5C5C] font-medium py-2 transition">FAQ</button>
+            <div className="pt-3 border-t border-[#E2E8F0] flex flex-col gap-3">
               {user ? (
                 <Link to="/dashboard" className="btn-primary text-center">Dashboard</Link>
               ) : (
                 <>
-                  <Link to="/login" className="text-text-slate hover:text-primary text-center py-2 transition">Log In</Link>
+                  <Link to="/login" className="btn-secondary text-center">Log In</Link>
                   <Link to="/register" className="btn-primary text-center">Get Started</Link>
                 </>
               )}
@@ -130,162 +196,296 @@ export default function Landing() {
       </header>
 
       <main>
-        {/* Hero — full width */}
-        <section className="pt-32 pb-20 px-8 bg-gradient-to-br from-bg-cream via-bg-sage to-bg-cream">
-          <div className="w-full text-center">
-            <div className="inline-flex items-center gap-2 bg-gold-bg border border-gold/30 text-gold px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-              <Sparkles size={16} />
-              AI-Powered Study Companion
+        {/* Hero */}
+        <section className="pt-32 pb-20 px-6 md:px-8 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-12 items-center">
+            <div className="lg:col-span-7 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 bg-[#FFFBEB] border border-[#FED7AA] text-[#172033] px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide mb-6">
+                <Sparkles size={14} className="text-[#FF5C5C]" />
+                Diving Deeply Into Daily Goals
+              </div>
+
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#172033] leading-[1.1] tracking-tight mb-6">
+                Study Smarter.
+                <br />
+                <span className="text-[#172554]">Stay Locked In.</span>
+                <br />
+                <span className="text-[#FF5C5C]">Master Every Goal.</span>
+              </h1>
+
+              <p className="text-[#64748B] text-lg md:text-xl mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                Daydive pairs an intelligent AI study assistant with real-time focus coaching and behavioral analytics—helping you turn scattered hours into measurable daily progress.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <Link to="/register" className="btn-primary inline-flex items-center justify-center gap-2 text-base px-8 py-3.5">
+                  Start Diving Free <ArrowRight size={18} />
+                </Link>
+                <button
+                  onClick={() => scrollToSection('how-it-works')}
+                  className="btn-secondary inline-flex items-center justify-center gap-2 text-base px-8 py-3.5"
+                >
+                  See How It Works
+                </button>
+              </div>
+
+              <div className="mt-10 pt-8 border-t border-[#E2E8F0] grid grid-cols-3 gap-4 max-w-lg mx-auto lg:mx-0">
+                <div>
+                  <div className="text-xl font-extrabold text-[#172554]">RAG AI</div>
+                  <div className="text-xs text-[#64748B] mt-0.5">Grounded in your notes</div>
+                </div>
+                <div>
+                  <div className="text-xl font-extrabold text-[#FF5C5C]">MindGuard</div>
+                  <div className="text-xs text-[#64748B] mt-0.5">Context-aware focus</div>
+                </div>
+                <div>
+                  <div className="text-xl font-extrabold text-[#22C55E]">Analytics</div>
+                  <div className="text-xs text-[#64748B] mt-0.5">Clear habit telemetry</div>
+                </div>
+              </div>
             </div>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-text-dark leading-tight mb-6">
-              Study Smarter.
-              <br />
-              <span className="text-primary">Stay Focused.</span>
-              <br />
-              <span className="text-gold">Improve Every Session.</span>
-            </h1>
-            <p className="text-text-slate text-lg md:text-xl mx-auto mb-8 leading-relaxed max-w-3xl">
-              KIKO AI combines intelligent study assistance with real-time focus coaching
-              to help students learn, stay focused, and understand their study habits.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/register" className="btn-primary flex items-center justify-center gap-2 text-base px-8 py-3">
-                Get Started Free <ArrowRight size={18} />
-              </Link>
-              <button
-                onClick={() => scrollToSection('how-it-works')}
-                className="btn-secondary flex items-center justify-center gap-2 text-base px-8 py-3"
-              >
-                See How It Works
-              </button>
+
+            {/* Live Product Preview Card */}
+            <div className="lg:col-span-5">
+              <div className="bg-[#172554] rounded-[24px] p-6 shadow-hover text-white border border-[#1E3A8A]">
+                <div className="flex items-center justify-between pb-4 border-b border-[#1E3A8A]">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" />
+                    <span className="text-xs font-semibold tracking-wide text-[#DBEAFE] uppercase">Live Study Session</span>
+                  </div>
+                  <span className="text-xs font-semibold bg-[#FFD166] text-[#172033] px-2.5 py-0.5 rounded-full">
+                    AI Active
+                  </span>
+                </div>
+
+                <div className="mt-5 bg-[#1E3A8A]/70 rounded-2xl p-4 border border-[#3B82F6]/20">
+                  <div className="text-xs text-[#93C5FD] font-medium">Current Goal</div>
+                  <div className="text-base font-bold text-white mt-1">Complete Linked Lists &amp; Trees</div>
+                  <div className="mt-3 flex items-center justify-between text-xs">
+                    <span className="text-[#DBEAFE] flex items-center gap-1.5">
+                      <Clock size={14} className="text-[#FF8A65]" /> 42:15 remaining
+                    </span>
+                    <span className="text-[#22C55E] font-semibold">94% Focus Score</span>
+                  </div>
+                  <div className="w-full h-2 bg-[#172554] rounded-full mt-2.5 overflow-hidden">
+                    <div className="w-[78%] h-full bg-[#FF5C5C] rounded-full" />
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="bg-white rounded-2xl p-4 text-[#172033]">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B]">
+                      <Shield size={14} className="text-[#22C55E]" /> MindGuard
+                    </div>
+                    <div className="text-sm font-bold text-[#172554] mt-1.5">On-Goal Activity</div>
+                    <div className="text-xs text-[#64748B] mt-0.5">LeetCode &amp; PDF Notes</div>
+                  </div>
+                  <div className="bg-white rounded-2xl p-4 text-[#172033]">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B]">
+                      <MessageSquare size={14} className="text-[#FF5C5C]" /> AI Tutor
+                    </div>
+                    <div className="text-sm font-bold text-[#172554] mt-1.5">12 Flashcards</div>
+                    <div className="text-xs text-[#64748B] mt-0.5">Generated from Page 4</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Problem — full width */}
-        <section className="py-16 px-8 bg-bg-white border-y border-border/50">
-          <div className="w-full text-center">
-            <span className="text-sm font-semibold text-gold uppercase tracking-wider">The Problem</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-text-dark mt-2 mb-4">
+        {/* Problem */}
+        <section className="py-16 px-6 md:px-8 bg-white border-y border-[#E2E8F0]">
+          <div className="max-w-4xl mx-auto text-center">
+            <span className="text-xs font-bold text-[#FF5C5C] uppercase tracking-widest">The Problem</span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#172033] mt-2 mb-4">
               The Internet Helps Us Study. <br className="hidden sm:block" />
-              <span className="text-primary">It Also Distracts Us.</span>
+              <span className="text-[#172554]">It Also Pulls Us Off Course.</span>
             </h2>
-            <p className="text-text-slate text-lg mx-auto leading-relaxed max-w-2xl">
-              You open YouTube for a tutorial. Recommendations appear. You switch tabs.
-              Instagram, entertainment, random browsing. <span className="text-primary font-semibold">30 minutes disappear.</span>
+            <p className="text-[#64748B] text-lg mx-auto leading-relaxed max-w-2xl">
+              You open a lecture video. Recommendations appear. You switch tabs—social feeds,
+              random browsing, and <span className="text-[#FF5C5C] font-semibold">30 minutes vanish.</span>
             </p>
-            <div className="mt-6 inline-block bg-secondary-extraLight px-6 py-3 rounded-card">
-              <p className="text-primary font-medium">
-                The problem isn't the internet. It's the inability to distinguish productive activity from distraction.
+            <div className="mt-7 inline-flex items-center gap-3 bg-[#FFF0EB] border border-[#FED7AA] px-6 py-3.5 rounded-card">
+              <Zap size={18} className="text-[#FF5C5C] flex-shrink-0" />
+              <p className="text-[#172033] text-sm md:text-base font-semibold">
+                The problem isn&apos;t the internet—it&apos;s lacking a system that separates deep work from drift.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Features — full width */}
-        <section id="features" className="py-20 px-8">
-          <div className="w-full">
-            <div className="text-center mb-12">
-              <span className="text-sm font-semibold text-gold uppercase tracking-wider">Features</span>
-              <h2 className="text-3xl md:text-4xl font-bold text-text-dark mt-2">Meet KIKO AI</h2>
-              <p className="text-text-slate mx-auto mt-2 max-w-2xl">
-                An intelligent study companion that combines learning, focus, and analytics.
+        {/* Features */}
+        <section id="features" className="py-20 px-6 md:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-14">
+              <span className="text-xs font-bold text-[#FF5C5C] uppercase tracking-widest">Features</span>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-[#172033] mt-2">Meet Daydive</h2>
+              <p className="text-[#64748B] mx-auto mt-2 max-w-2xl">
+                One cohesive workspace combining grounded AI learning, live focus protection, and actionable telemetry.
               </p>
             </div>
+
             <div className="grid md:grid-cols-3 gap-6">
               {[
-                { icon: BookOpen, title: 'Learn', desc: 'AI summaries, flashcards, quizzes, and an AI tutor.', iconBg: 'bg-secondary-extraLight', iconColor: 'text-primary' },
-                { icon: Target, title: 'Focus', desc: 'Real-time focus monitoring with MindGuard.', iconBg: 'bg-gold-bg', iconColor: 'text-gold' },
-                { icon: TrendingUp, title: 'Improve', desc: 'Analytics and AI insights to understand your habits.', iconBg: 'bg-status-successBg', iconColor: 'text-status-success' },
+                {
+                  icon: BookOpen,
+                  title: 'Learn Deeper',
+                  desc: 'Upload PDFs and notes to generate summaries, flashcards, adaptive quizzes, and page-grounded AI Tutor explanations.',
+                  iconBg: 'bg-[#FFF0EB]',
+                  iconColor: 'text-[#FF5C5C]',
+                  tag: 'RAG Powered',
+                },
+                {
+                  icon: Target,
+                  title: 'Stay Focused',
+                  desc: 'MindGuard tracks active tabs against your session goal in real time, nudging you back before a detour becomes an hour.',
+                  iconBg: 'bg-[#172554]',
+                  iconColor: 'text-white',
+                  tag: 'Live Coaching',
+                },
+                {
+                  icon: TrendingUp,
+                  title: 'Improve Daily',
+                  desc: 'Deterministic focus scores, distraction timelines, and session reports reveal exactly when and how you study best.',
+                  iconBg: 'bg-[#ECFDF5]',
+                  iconColor: 'text-[#22C55E]',
+                  tag: 'Clear Metrics',
+                },
               ].map((feature, i) => (
-                <div key={i} className="card p-8 text-center">
-                  <div className={`w-14 h-14 ${feature.iconBg} rounded-xl flex items-center justify-center mx-auto mb-4`}>
-                    <feature.icon className={feature.iconColor} size={28} />
+                <div key={i} className="card p-8 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-6">
+                      <div className={`w-14 h-14 ${feature.iconBg} rounded-2xl flex items-center justify-center`}>
+                        <feature.icon className={feature.iconColor} size={26} />
+                      </div>
+                      <span className="text-xs font-semibold text-[#172554] bg-[#FFF8F5] border border-[#FED7AA] px-3 py-1 rounded-full">
+                        {feature.tag}
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-bold text-[#172033] mb-2.5">{feature.title}</h3>
+                    <p className="text-[#64748B] text-sm leading-relaxed">{feature.desc}</p>
                   </div>
-                  <h3 className="text-xl font-semibold text-text-dark mb-2">{feature.title}</h3>
-                  <p className="text-text-slate text-sm">{feature.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* How It Works — full width */}
-        <section id="how-it-works" className="py-20 px-8 bg-bg-sage">
-          <div className="w-full">
-            <div className="text-center mb-12">
-              <span className="text-sm font-semibold text-gold uppercase tracking-wider">Process</span>
-              <h2 className="text-3xl md:text-4xl font-bold text-text-dark mt-2">How KIKO Works</h2>
+        {/* How It Works */}
+        <section id="how-it-works" className="py-20 px-6 md:px-8 bg-[#FFF2EB]/70 border-y border-[#FED7AA]/50">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-14">
+              <span className="text-xs font-bold text-[#FF5C5C] uppercase tracking-widest">Process</span>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-[#172033] mt-2">How Daydive Works</h2>
+              <p className="text-[#64748B] mx-auto mt-2 max-w-xl">
+                Five simple steps from setting a daily goal to building lasting focus habits.
+              </p>
             </div>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="space-y-4">
+
+            <div className="grid lg:grid-cols-12 gap-8 items-center">
+              <div className="lg:col-span-7 space-y-3.5">
                 {[
-                  { num: '01', title: 'Set Your Goal', desc: '"Complete Linked Lists in 60 minutes."' },
-                  { num: '02', title: 'Start Studying', desc: 'Use YouTube, LeetCode, documentation, or your notes.' },
-                  { num: '03', title: 'KIKO Understands', desc: 'MindGuard identifies relevant vs distracting activity.' },
-                  { num: '04', title: 'Stay Focused', desc: 'KIKO provides smart nudges when you drift off-goal.' },
-                  { num: '05', title: 'Review & Improve', desc: 'See your session report and AI-generated insights.' },
+                  { num: '01', title: 'Set Your Daily Goal', desc: 'Define a clear target like "Complete Linked Lists in 60 minutes."' },
+                  { num: '02', title: 'Start Studying', desc: 'Use YouTube lectures, LeetCode, documentation, or your uploaded PDFs.' },
+                  { num: '03', title: 'Daydive Understands Context', desc: 'MindGuard distinguishes goal-aligned study from off-topic browsing.' },
+                  { num: '04', title: 'Stay Locked In', desc: 'Receive timely, context-aware nudges the moment your focus drifts.' },
+                  { num: '05', title: 'Review & Improve', desc: 'Inspect your focus score, timeline, and AI takeaways after every session.' },
                 ].map((step, i) => (
-                  <div key={i} className="flex items-start gap-4 bg-bg-white rounded-card p-4 shadow-card">
-                    <div className="text-gold font-mono text-sm font-bold min-w-[32px]">{step.num}</div>
+                  <div key={i} className="flex items-start gap-4 bg-white rounded-card p-4 border border-[#E2E8F0] shadow-card hover:border-[#FED7AA] transition">
+                    <div className="w-9 h-9 rounded-xl bg-[#172554] text-white font-mono text-xs font-bold flex items-center justify-center flex-shrink-0">
+                      {step.num}
+                    </div>
                     <div>
-                      <div className="font-semibold text-text-dark">{step.title}</div>
-                      <div className="text-text-slate text-sm">{step.desc}</div>
+                      <div className="font-bold text-[#172033]">{step.title}</div>
+                      <div className="text-[#64748B] text-sm mt-0.5">{step.desc}</div>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="card p-8 flex flex-col items-center justify-center text-center">
-                <div className="text-6xl mb-4">🎯</div>
-                <p className="text-text-slate text-sm font-medium">
-                  Plan → Learn → Focus → Detect → Intervene → Analyze → Improve
-                </p>
-                <div className="w-full h-1.5 bg-border rounded-full mt-6">
-                  <div className="w-full h-full bg-primary rounded-full" />
+
+              <div className="lg:col-span-5">
+                <div className="bg-[#172554] text-white rounded-[22px] p-8 shadow-hover border border-[#1E3A8A]">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-11 h-11 rounded-xl bg-[#FF5C5C] flex items-center justify-center">
+                      <Layers size={22} className="text-white" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-wider text-[#93C5FD]">Continuous Loop</div>
+                      <div className="text-lg font-bold">The Daydive Focus Engine</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3">
+                    {PIPELINE_STEPS.map((item, idx) => {
+                      const StepIcon = item.icon;
+                      return (
+                        <div
+                          key={item.label}
+                          className="flex items-center gap-2.5 bg-[#1E3A8A]/80 border border-[#3B82F6]/20 rounded-xl px-3.5 py-2.5"
+                        >
+                          <StepIcon size={16} className="text-[#FF8A65] flex-shrink-0" />
+                          <span className="text-sm font-semibold text-white">{idx + 1}. {item.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-6 pt-5 border-t border-[#1E3A8A] flex items-center justify-between text-xs text-[#DBEAFE]">
+                    <span>Goal-aligned telemetry</span>
+                    <span className="text-[#22C55E] font-semibold">Real-time sync</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Why Different — full width */}
-        <section className="py-20 px-8">
-          <div className="w-full">
+        {/* Why Different */}
+        <section className="py-20 px-6 md:px-8">
+          <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
-              <span className="text-sm font-semibold text-gold uppercase tracking-wider">Why KIKO</span>
-              <h2 className="text-3xl md:text-4xl font-bold text-text-dark mt-2">What Makes KIKO Different</h2>
-              <p className="text-text-slate mx-auto mt-2 max-w-2xl">
-                KIKO doesn't ask <span className="text-text-muted line-through">"Which websites should I block?"</span><br />
-                It asks <span className="text-primary font-semibold">"Is this activity helping me achieve my study goal?"</span>
+              <span className="text-xs font-bold text-[#FF5C5C] uppercase tracking-widest">Why Daydive</span>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-[#172033] mt-2">Built Around Intent, Not Rigid Blocks</h2>
+              <p className="text-[#64748B] mx-auto mt-3 max-w-2xl">
+                Daydive doesn&apos;t just ask <span className="text-[#94A3B8] line-through">&quot;Which websites should I block?&quot;</span>
+                <br />
+                It asks <span className="text-[#172554] font-semibold">&quot;Is this activity moving you closer to today&apos;s goal?&quot;</span>
               </p>
             </div>
+
             <div className="grid md:grid-cols-2 gap-4">
               {[
-                { bad: 'Blocks websites', good: 'Understands study context' },
-                { bad: 'Separates learning tools', good: 'Combines learning + focus' },
-                { bad: 'Tracks time only', good: 'Analyzes behaviour' },
-                { bad: 'Generic reminders', good: 'Context-aware interventions' },
-                { bad: 'AI chatbot only', good: 'AI + focus coaching' },
-                { bad: 'Basic stats', good: 'Study behaviour insights' },
+                { bad: 'Blindly blocks websites', good: 'Understands study context' },
+                { bad: 'Scattered learning tools', good: 'Unified AI + focus workspace' },
+                { bad: 'Tracks raw hours only', good: 'Analyzes focus behavior' },
+                { bad: 'Generic timer alerts', good: 'Context-aware interventions' },
+                { bad: 'Standalone AI chatbot', good: 'Material-grounded AI tutor' },
+                { bad: 'Surface-level stats', good: 'Actionable habit insights' },
               ].map((item, i) => (
-                <div key={i} className="card p-4 flex items-center justify-between">
-                  <span className="text-text-muted text-sm line-through">{item.bad}</span>
-                  <ArrowRight className="text-gold" size={16} />
-                  <span className="text-text-dark text-sm font-medium">{item.good}</span>
+                <div key={i} className="card p-4 flex items-center justify-between gap-3">
+                  <span className="inline-flex items-center gap-2 text-[#64748B] text-sm line-through">
+                    <XCircle size={16} className="text-[#94A3B8] flex-shrink-0" />
+                    {item.bad}
+                  </span>
+                  <ArrowRight className="text-[#FF5C5C] flex-shrink-0" size={16} />
+                  <span className="inline-flex items-center gap-2 text-[#172033] text-sm font-semibold text-right">
+                    <CheckCircle2 size={16} className="text-[#22C55E] flex-shrink-0" />
+                    {item.good}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Developers / Team — full width */}
-        <section id="developers" className="py-20 px-8 bg-bg-sage">
-          <div className="w-full">
+        {/* Developers / Team */}
+        <section id="developers" className="py-20 px-6 md:px-8 bg-[#FFF2EB]/70 border-y border-[#FED7AA]/50">
+          <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
-              <span className="text-sm font-semibold text-gold uppercase tracking-wider">The Team</span>
-              <h2 className="text-3xl md:text-4xl font-bold text-text-dark mt-2">Meet the Developers</h2>
-              <p className="text-text-slate mx-auto mt-2 max-w-2xl">
-                Four engineers, one mission — build a study companion that actually understands students.
+              <span className="text-xs font-bold text-[#FF5C5C] uppercase tracking-widest">The Team</span>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-[#172033] mt-2">Meet the Developers</h2>
+              <p className="text-[#64748B] mx-auto mt-2 max-w-2xl">
+                Four engineers on one mission—building a study companion that genuinely understands how students work.
               </p>
             </div>
 
@@ -299,15 +499,15 @@ export default function Landing() {
                         <Icon className={dev.iconColor} size={26} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-lg font-bold text-text-dark">{dev.name}</h3>
-                        <p className="text-primary text-sm font-medium">{dev.role}</p>
+                        <h3 className="text-lg font-bold text-[#172033]">{dev.name}</h3>
+                        <p className="text-[#FF5C5C] text-sm font-semibold">{dev.role}</p>
                       </div>
                     </div>
 
                     <ul className="space-y-2">
                       {dev.points.map((p, j) => (
-                        <li key={j} className="flex items-start gap-2 text-text-slate text-sm leading-relaxed">
-                          <span className={`w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0 ${dev.iconColor.replace('text-', 'bg-')}`} />
+                        <li key={j} className="flex items-start gap-2.5 text-[#475569] text-sm leading-relaxed">
+                          <span className={`w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0 ${dev.dotColor}`} />
                           <span>{p}</span>
                         </li>
                       ))}
@@ -319,63 +519,73 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* CTA — full width */}
-        <section className="py-20 px-8 bg-gradient-to-br from-gold-bg to-bg-cream border-y border-gold/30">
-          <div className="w-full text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-dark mb-4">
+        {/* CTA */}
+        <section className="py-20 px-6 md:px-8 bg-[#172554] text-white">
+          <div className="max-w-4xl mx-auto text-center">
+            <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#FFD166] mb-3">
+              Diving Deeply Into Daily Goals
+            </span>
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
               Ready to Take Control of Your Study Sessions?
             </h2>
-            <p className="text-text-slate mb-8 text-lg">
-              Start learning with KIKO AI and turn your study time into focused study time.
+            <p className="text-[#DBEAFE] mb-8 text-lg max-w-2xl mx-auto">
+              Start learning with Daydive and turn every study block into focused, measurable progress.
             </p>
-            <Link to="/register" className="btn-primary inline-flex items-center gap-2 text-base px-8 py-3">
+            <Link to="/register" className="btn-primary inline-flex items-center gap-2 text-base px-8 py-3.5">
               Get Started Free <ArrowRight size={18} />
             </Link>
           </div>
         </section>
 
-        {/* FAQ — full width */}
-        <section id="faq" className="py-20 px-8">
-          <div className="w-full">
+        {/* FAQ */}
+        <section id="faq" className="py-20 px-6 md:px-8">
+          <div className="max-w-3xl mx-auto">
             <div className="text-center mb-12">
-              <span className="text-sm font-semibold text-gold uppercase tracking-wider">FAQ</span>
-              <h2 className="text-3xl md:text-4xl font-bold text-text-dark mt-2">Frequently Asked Questions</h2>
+              <span className="text-xs font-bold text-[#FF5C5C] uppercase tracking-widest">FAQ</span>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-[#172033] mt-2">Frequently Asked Questions</h2>
             </div>
-            <div className="space-y-4 max-w-3xl mx-auto">
-              {[
-                { q: 'What is KIKO AI?', a: 'KIKO AI is an intelligent study companion that combines AI-powered learning assistance with real-time focus monitoring and study analytics.' },
-                { q: 'How does KIKO detect distractions?', a: 'MindGuard analyzes your browsing activity, website context, and study goal to determine if you\'re staying focused or getting distracted.' },
-                { q: 'Does KIKO block websites?', a: 'No. KIKO guides you back to focus rather than blocking websites. It understands the difference between educational and distracting content. You can optionally add sites to a custom blocklist.' },
-                { q: 'Can I use YouTube for studying?', a: 'Absolutely. YouTube tutorials are recognized as relevant content when they match your study goal.' },
-                { q: 'Is my data secure?', a: 'Yes. All passwords are hashed with bcrypt, APIs are JWT-authenticated, and your data belongs only to you.' },
-              ].map((faq, i) => (
-                <div key={i} className="card p-5">
-                  <h4 className="font-semibold text-text-dark">{faq.q}</h4>
-                  <p className="text-text-slate text-sm mt-1">{faq.a}</p>
-                </div>
-              ))}
+            <div className="space-y-3">
+              {FAQS.map((faq, i) => {
+                const isOpen = openFaq === i;
+                return (
+                  <div key={i} className="card overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaq(isOpen ? -1 : i)}
+                      className="w-full p-5 text-left flex items-center justify-between gap-4"
+                    >
+                      <span className="font-bold text-[#172033]">{faq.q}</span>
+                      <ChevronDown
+                        size={18}
+                        className={`text-[#FF5C5C] flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                    {isOpen && (
+                      <div className="px-5 pb-5 text-[#64748B] text-sm leading-relaxed border-t border-[#E2E8F0]/60 pt-3">
+                        {faq.a}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
 
-        {/* Footer — full width */}
-        <footer className="border-t border-border bg-bg-white py-10 px-8">
-          <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4 text-text-muted text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-[10px]">K</span>
-              </div>
-              <span className="font-bold text-primary">KIKO</span>
-              <span className="text-gold">AI</span>
-              <span className="ml-2 text-text-muted">— Kickstart Your Focus Era</span>
+        {/* Footer */}
+        <footer className="border-t border-[#E2E8F0] bg-white py-10 px-6 md:px-8">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-[#64748B] text-sm">
+            <div className="flex items-center gap-3">
+              <BrandLogo size="sm" />
+              <span className="hidden sm:inline text-[#64748B]">— Diving deeply into daily goals</span>
             </div>
-            <div className="flex gap-6">
-              <button onClick={() => scrollToSection('features')} className="hover:text-primary transition">Features</button>
-              <button onClick={() => scrollToSection('how-it-works')} className="hover:text-primary transition">How It Works</button>
-              <button onClick={() => scrollToSection('developers')} className="hover:text-primary transition">Team</button>
-              <button onClick={() => scrollToSection('faq')} className="hover:text-primary transition">FAQ</button>
+            <div className="flex gap-6 font-medium">
+              <button onClick={() => scrollToSection('features')} className="hover:text-[#172554] transition">Features</button>
+              <button onClick={() => scrollToSection('how-it-works')} className="hover:text-[#172554] transition">How It Works</button>
+              <button onClick={() => scrollToSection('developers')} className="hover:text-[#172554] transition">Team</button>
+              <button onClick={() => scrollToSection('faq')} className="hover:text-[#172554] transition">FAQ</button>
             </div>
-            <div>© 2026 KIKO AI</div>
+            <div>© 2026 Daydive</div>
           </div>
         </footer>
       </main>
