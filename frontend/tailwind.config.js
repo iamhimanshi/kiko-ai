@@ -7,81 +7,88 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Primary - Forest Green
-        primary: {
-          DEFAULT: '#1B4332',
-          hover: '#24543F',
-          pressed: '#163426',
-          light: '#DDEEDF',
-        },
-        // Secondary Green
-        secondary: {
-          DEFAULT: '#4F8A63',
-          light: '#A9D3B0',
-          extraLight: '#EEF7F0',
-        },
-        // Gold Accent
-        gold: {
-          DEFAULT: '#D4A64A',
-          hover: '#C9962E',
-          light: '#F7E5B5',
-          bg: '#FFF8E8',
-        },
-        // Backgrounds - THESE WERE MISSING
-        bg: {
-          cream: '#F8F7F2',
-          white: '#FFFFFF',
-          sage: '#F2F5EF',
-          hover: '#EDF4EE',
-          surface: '#F8F7F2',  // Added alias
-          base: '#F8F7F2',     // Added alias
-          elevated: '#FFFFFF', // Added alias
-          subtle: '#F2F5EF',   // Added alias
-        },
-        // Text
-        text: {
-          dark: '#1F2937',
-          slate: '#4B5563',
-          muted: '#6B7280',
-          placeholder: '#9CA3AF',
-          disabled: '#D1D5DB',
-          primary: '#1F2937',   // Added alias
-          secondary: '#4B5563', // Added alias
-        },
-        // Status
-        status: {
-          success: '#2E7D32',
-          successBg: '#EAF8EC',
-          warning: '#D97706',
-          warningBg: '#FFF6E4',
-          error: '#D14343',
-          errorBg: '#FDECEC',
-          muted: '#6B7280',
-          mutedBg: '#F3F4F6',
-        },
-        // Border
-        border: {
-          DEFAULT: '#E8ECE7',
-          light: '#DDE6DD',
-        },
-        // Sidebar
-        sidebar: {
-          bg: '#163020',
-          logo: '#1B4332',
-          active: '#2E5A43',
-          hover: '#244535',
+        brand: {
+          deep: '#121212',
+          surface: '#1A1A1A',
+          card: '#232325',
+          amber: '#FF841C',
+          orange: '#E66A10',
           text: '#FFFFFF',
-          inactive: '#C9D6CB',
-          icon: '#E6F2E7',
-          divider: '#2C493A',
+          muted: '#8E8E93',
+          success: '#10B981',
+          border: '#2E2E32',
         },
-        // Charts
+        primary: {
+          DEFAULT: '#E66A10',
+          hover: '#FF841C',
+          pressed: '#CC5B0A',
+          light: '#2E1E12',
+        },
+        secondary: {
+          DEFAULT: '#FF841C',
+          light: '#FDBA74',
+          extraLight: '#232325',
+        },
+        gold: {
+          DEFAULT: '#FF841C',
+          hover: '#E66A10',
+          light: '#FDBA74',
+          bg: '#261A10',
+        },
+        bg: {
+          cream: '#121212',
+          white: '#1A1A1A',
+          sage: '#232325',
+          hover: '#2A2A2E',
+          surface: '#1A1A1A',
+          base: '#121212',
+          elevated: '#232325',
+          subtle: '#1A1A1A',
+        },
+        text: {
+          dark: '#FFFFFF',
+          slate: '#D1D5DB',
+          muted: '#8E8E93',
+          placeholder: '#636366',
+          disabled: '#48484A',
+          primary: '#FFFFFF',
+          secondary: '#8E8E93',
+        },
+        status: {
+          success: '#10B981',
+          successBg: '#0F2922',
+          warning: '#FF841C',
+          warningBg: '#261A10',
+          error: '#EF4444',
+          errorBg: '#2D1616',
+          muted: '#8E8E93',
+          mutedBg: '#232325',
+        },
+        border: {
+          DEFAULT: '#2E2E32',
+          light: '#3A3A40',
+          warm: '#FF841C',
+        },
+        sidebar: {
+          bg: '#1A1A1A',
+          logo: '#232325',
+          active: '#E66A10',
+          hover: '#232325',
+          text: '#FFFFFF',
+          inactive: '#8E8E93',
+          icon: '#D1D5DB',
+          divider: '#2E2E32',
+        },
         chart: {
-          primary: '#2D6A4F',
-          secondary: '#D4A64A',
-          grid: '#E8ECE7',
-          label: '#64748B',
+          primary: '#10B981',
+          secondary: '#FF841C',
+          accent: '#E66A10',
+          grid: '#2E2E32',
+          label: '#8E8E93',
         },
+      },
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
       },
       borderRadius: {
         card: '18px',
@@ -90,8 +97,9 @@ export default {
         badge: '9999px',
       },
       boxShadow: {
-        card: '0px 4px 12px rgba(16, 24, 40, 0.06)',
-        hover: '0px 8px 24px rgba(16, 24, 40, 0.10)',
+        card: '0px 4px 16px rgba(0, 0, 0, 0.35)',
+        hover: '0px 10px 28px rgba(0, 0, 0, 0.5)',
+        amber: '0px 8px 20px rgba(230, 106, 16, 0.25)',
       },
     },
   },

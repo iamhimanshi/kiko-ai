@@ -2,31 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-bg-deep: #121212;
+  --color-surface: #1A1A1A;
+  --color-card: #232325;
+  --color-amber: #FF841C;
+  --color-orange: #E66A10;
+  --color-text: #FFFFFF;
+  --color-text-muted: #8E8E93;
+  --color-success: #10B981;
+  --color-border: #2E2E32;
+}
+
 @layer base {
   body {
-    @apply bg-[#F8F7F2] text-[#1F2937] antialiased;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    @apply bg-[#121212] text-[#FFFFFF] antialiased;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 transition-shadow hover:shadow-[0px_8px_24px_rgba(16,24,40,0.10)];
+    @apply bg-[#1A1A1A] rounded-[18px] border border-[#2E2E32] transition-all hover:border-[#FF841C]/40;
   }
 
   .btn-primary {
-    @apply bg-[#1B4332] text-white px-6 py-2.5 rounded-[14px] font-medium transition-all hover:bg-[#24543F] active:bg-[#163426];
+    @apply bg-[#E66A10] text-[#121212] px-6 py-2.5 rounded-[14px] font-bold transition-all hover:bg-[#FF841C] active:bg-[#CC5B0A] shadow-[0px_4px_14px_rgba(230,106,16,0.25)];
   }
 
   .btn-secondary {
-    @apply bg-white border border-[#E8ECE7] text-[#1B4332] px-6 py-2.5 rounded-[14px] font-medium transition-all hover:bg-[#EDF4EE];
+    @apply bg-[#232325] border border-[#2E2E32] text-[#FFFFFF] px-6 py-2.5 rounded-[14px] font-semibold transition-all hover:border-[#FF841C]/50 hover:bg-[#2C2C30];
+  }
+
+  .btn-navy {
+    @apply bg-[#232325] text-[#FFFFFF] px-6 py-2.5 rounded-[14px] font-semibold transition-all hover:bg-[#2E2E32];
   }
 
   .btn-gold {
-    @apply bg-[#D4A64A] text-white px-6 py-2.5 rounded-[14px] font-medium transition-all hover:bg-[#C9962E];
+    @apply bg-[#FF841C] text-[#121212] px-6 py-2.5 rounded-[14px] font-bold transition-all hover:bg-[#E66A10];
   }
 
   .input-field {
-    @apply w-full bg-white border border-[#E8ECE7] rounded-[14px] px-4 py-3 text-[#1F2937] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] transition-all;
+    @apply w-full bg-[#232325] border border-[#2E2E32] rounded-[14px] px-4 py-3 text-[#FFFFFF] placeholder:text-[#8E8E93] focus:outline-none focus:ring-2 focus:ring-[#FF841C]/30 focus:border-[#FF841C] transition-all;
   }
 }
+
