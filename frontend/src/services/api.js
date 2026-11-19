@@ -68,6 +68,7 @@ export const assistantApi = {
   practiceDelete: (id) => api.delete(`/assistant/practice/history/${id}`),
 };
 
+// MindGuard
 export const mindguardApi = {
   status: () => api.get('/mindguard/status'),
   live: () => api.get('/mindguard/live'),
@@ -78,6 +79,7 @@ export const mindguardApi = {
   deleteBlocked: (id) => api.delete(`/mindguard/blocked-websites/${id}`),
 };
 
+// Analytics
 export const analyticsApi = {
   overview: (range = '7d') => api.get(`/analytics/overview?range=${range}`),
   focusTrends: (range = '7d') => api.get(`/analytics/focus-trends?range=${range}`),
@@ -85,5 +87,22 @@ export const analyticsApi = {
   sessionReport: (id) => api.get(`/analytics/session/${id}/report`),
 };
 
+// Study Planner
+export const plannerApi = {
+  createPlan: (data) => api.post('/planner/plans', data),
+  getActivePlan: () => api.get('/planner/plans/active'),
+  listPlans: () => api.get('/planner/plans'),
+  updateTaskStatus: (taskId, status, linkedSessionId = null) =>
+    api.patch(`/planner/tasks/${taskId}/status`, { status, linked_session_id: linkedSessionId }),
+  rescheduleTask: (taskId, scheduledDate) =>
+    api.patch(`/planner/tasks/${taskId}/reschedule`, { scheduled_date: scheduledDate }),
+  deletePlan: (planId) => api.delete(`/planner/plans/${planId}`),
+  getRecommendations: () => api.get('/planner/recommendations'),
+  analyzeBehavior: () => api.post('/planner/recommendations/analyze'),
+  applyRecommendation: (recId) => api.post(`/planner/recommendations/${recId}/apply`),
+  dismissRecommendation: (recId) => api.post(`/planner/recommendations/${recId}/dismiss`),
+  sendAgentCommand: (command) => api.post('/planner/agent/command', { command }),
+  confirmAgentAction: (intent, params = {}) => api.post('/planner/agent/confirm', { intent, params }),
+};
 
 export default api;

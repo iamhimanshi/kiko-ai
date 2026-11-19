@@ -4,6 +4,13 @@ from app.models.behavior import BehaviorEvent
 from app.models.document import Document
 from app.models.practice_record import PracticeRecord
 from app.models.blocked_website import BlockedWebsite
+from app.models.planner import (
+    StudyPlan,
+    PlanSubject,
+    PlannedTask,
+    StudentPlannerProfile,
+    PlannerRecommendation,
+)
 
 __all__ = [
     "User",
@@ -13,4 +20,9 @@ __all__ = [
     "Document",
     "PracticeRecord",
     "BlockedWebsite",
+    "StudyPlan",
+    "PlanSubject",
+    "PlannedTask",
+    "StudentPlannerProfile",
+    "PlannerRecommendation",
 ]

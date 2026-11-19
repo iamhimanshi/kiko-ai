@@ -5,11 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.routers import auth, documents, assistant, sessions, mindguard,analytics
+from app.routers import auth, documents, assistant, sessions, mindguard, analytics, planner
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -22,7 +22,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
@@ -31,13 +30,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Routes
 app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(assistant.router)
 app.include_router(sessions.router)
 app.include_router(mindguard.router)
 app.include_router(analytics.router)
+app.include_router(planner.router)
 
 
 @app.get("/")

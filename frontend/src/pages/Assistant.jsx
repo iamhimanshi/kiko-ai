@@ -4,6 +4,7 @@ import DocumentsTab from '../components/assistant/DocumentsTab';
 import AITutorTab from '../components/assistant/AITutorTab';
 import QuickRevisionTab from '../components/assistant/QuickRevisionTab';
 import PracticeTab from '../components/assistant/PracticeTab';
+import PlannerTab from '../components/assistant/PlannerTab';
 import { FileText, MessageCircle, Brain, Sparkles, Calendar } from 'lucide-react';
 
 const TABS = [
@@ -11,7 +12,7 @@ const TABS = [
   { id: 'tutor',     label: 'AI Tutor',       icon: MessageCircle },
   { id: 'practice',  label: 'Practice',       icon: Brain },
   { id: 'revision',  label: 'Quick Revision', icon: Sparkles },
-  { id: 'planner',   label: 'Planner',        icon: Calendar, disabled: true },
+  { id: 'planner',   label: 'Planner',        icon: Calendar },
 ];
 
 export default function Assistant() {
@@ -40,23 +41,15 @@ export default function Assistant() {
                 <button
                   key={tab.id}
                   type="button"
-                  disabled={tab.disabled}
-                  onClick={() => !tab.disabled && setActiveTab(tab.id)}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-t-[12px] text-sm font-semibold transition whitespace-nowrap border-b-2 ${
                     isActive
                       ? 'text-[#FF841C] border-[#FF841C] bg-[#232325]'
-                      : tab.disabled
-                      ? 'text-[#636366] cursor-not-allowed border-transparent'
                       : 'text-[#8E8E93] hover:text-white border-transparent'
                   }`}
                 >
                   <Icon size={16} />
                   {tab.label}
-                  {tab.disabled && (
-                    <span className="text-[9px] font-semibold bg-[#232325] border border-[#2E2E32] text-[#8E8E93] px-1.5 py-0.5 rounded-full">
-                      soon
-                    </span>
-                  )}
                 </button>
               );
             })}
@@ -78,6 +71,7 @@ export default function Assistant() {
             {activeTab === 'revision' && (
               <QuickRevisionTab initialDocId={selectedDocId} />
             )}
+            {activeTab === 'planner' && <PlannerTab />}
           </div>
         </div>
       </main>
