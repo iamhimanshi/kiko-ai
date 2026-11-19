@@ -40,14 +40,11 @@ async function logout() {
 function renderLogin() {
   app.innerHTML = `
     <div class="wrap">
-      <div class="header">
-        <div class="logo">K</div>
-        <div class="brand">KIKO <span class="ai">AI</span></div>
-      </div>
+      ${headerHTML()}
       <div class="card">
         <div class="label">Sign in</div>
         <p class="muted" style="margin-top:0;margin-bottom:14px">
-          Sign in with the same account you use on the KIKO web app.
+          Sign in with the same account you use on the DayDive web app.
         </p>
         <div id="login-error"></div>
         <form id="login-form">
@@ -107,7 +104,7 @@ function renderNoSession() {
       ${statusCard("Status", "idle", "No Study Session")}
       <div class="card">
         <p class="muted" style="margin:0">
-          Start a study session in the KIKO web app to activate MindGuard.
+          Start a study session in the DayDive web app to activate MindGuard.
         </p>
       </div>
       ${footerHTML()}
@@ -170,8 +167,8 @@ function renderActive(session, currentTab, classification) {
 function headerHTML() {
   return `
     <div class="header">
-      <div class="logo">K</div>
-      <div class="brand">KIKO <span class="ai">AI</span></div>
+      <div class="logo">D</div>
+      <div class="brand">DayDive <span class="ai">AI</span></div>
     </div>
   `;
 }
@@ -181,7 +178,7 @@ function footerHTML() {
     <div class="card" style="padding:12px 16px">
       <div class="row">
         <span>Extension</span>
-        <strong style="color:#2E7D32">Connected ✓</strong>
+        <strong style="color:#10B981">Connected ✓</strong>
       </div>
       <div class="row">
         <span>MindGuard</span>
@@ -244,7 +241,7 @@ async function fetchAndRender() {
         ${headerHTML()}
         ${statusCard("Connection", "error", "Not Connected")}
         <div class="card">
-          <p class="muted" style="margin:0">Unable to reach KIKO. Make sure the backend is running.</p>
+          <p class="muted" style="margin:0">Unable to reach DayDive. Make sure the backend is running.</p>
         </div>
         ${footerHTML()}
       </div>
@@ -271,7 +268,6 @@ async function fetchAndRender() {
     reason: current.reason,
   } : null;
 
-  // Build a small tab object for the UI
   const currentTab = current ? {
     domain: current.domain,
     title: current.page_title,

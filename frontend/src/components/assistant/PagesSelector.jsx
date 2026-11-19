@@ -5,15 +5,8 @@ const MODES = [
 ];
 
 export default function PagesSelector({
-  pageCount,
-  mode,
-  setMode,
-  rangeStart,
-  setRangeStart,
-  rangeEnd,
-  setRangeEnd,
-  selectedPages,
-  togglePage,
+  pageCount, mode, setMode, rangeStart, setRangeStart,
+  rangeEnd, setRangeEnd, selectedPages, togglePage,
 }) {
   if (!pageCount) return null;
 
@@ -25,10 +18,10 @@ export default function PagesSelector({
             key={m.id}
             type="button"
             onClick={() => setMode(m.id)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
               mode === m.id
-                ? 'bg-[#1B4332] text-white'
-                : 'bg-white border border-[#E8ECE7] text-[#4B5563] hover:bg-[#EDF4EE]'
+                ? 'bg-[#E66A10] text-white'
+                : 'bg-[#232325] border border-[#2E2E32] text-[#8E8E93] hover:text-white'
             }`}
           >
             {m.id === 'all' ? `${m.label} (${pageCount})` : m.label}
@@ -39,23 +32,17 @@ export default function PagesSelector({
       {mode === 'range' && (
         <div className="flex items-center gap-3">
           <input
-            type="number"
-            min="1"
-            max={pageCount}
-            value={rangeStart}
+            type="number" min="1" max={pageCount} value={rangeStart}
             onChange={(e) => setRangeStart(Number(e.target.value))}
-            className="w-20 bg-white border border-[#E8ECE7] rounded-[12px] px-3 py-2 text-sm text-[#1F2937] focus:outline-none focus:border-[#1B4332]"
+            className="w-20 bg-[#232325] border border-[#2E2E32] rounded-[12px] px-3 py-2 text-sm text-white focus:outline-none focus:border-[#FF841C]"
           />
-          <span className="text-[#9CA3AF] text-sm">to</span>
+          <span className="text-[#8E8E93] text-sm">to</span>
           <input
-            type="number"
-            min="1"
-            max={pageCount}
-            value={rangeEnd}
+            type="number" min="1" max={pageCount} value={rangeEnd}
             onChange={(e) => setRangeEnd(Number(e.target.value))}
-            className="w-20 bg-white border border-[#E8ECE7] rounded-[12px] px-3 py-2 text-sm text-[#1F2937] focus:outline-none focus:border-[#1B4332]"
+            className="w-20 bg-[#232325] border border-[#2E2E32] rounded-[12px] px-3 py-2 text-sm text-white focus:outline-none focus:border-[#FF841C]"
           />
-          <span className="text-[#9CA3AF] text-xs">of {pageCount}</span>
+          <span className="text-[#8E8E93] text-xs">of {pageCount}</span>
         </div>
       )}
 
@@ -66,10 +53,10 @@ export default function PagesSelector({
               key={n}
               type="button"
               onClick={() => togglePage(n)}
-              className={`w-9 h-9 rounded-[10px] text-xs font-medium transition ${
+              className={`w-9 h-9 rounded-[10px] text-xs font-semibold transition ${
                 selectedPages.includes(n)
-                  ? 'bg-[#1B4332] text-white'
-                  : 'bg-white border border-[#E8ECE7] text-[#4B5563] hover:bg-[#EDF4EE]'
+                  ? 'bg-[#E66A10] text-white'
+                  : 'bg-[#232325] border border-[#2E2E32] text-[#8E8E93] hover:text-white'
               }`}
             >
               {n}

@@ -1,3 +1,4 @@
+import re
 from typing import List, Optional
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,27 +9,31 @@ from app.services import ai_service, document_service, rag_service
 
 
 SYSTEM_PROMPT = (
-    "You are KIKO, a focused and clear study assistant for students. "
-    "You explain concepts accurately and concisely. "
-    "When study material is provided, ground your answers ONLY in that material. "
-    "If the material doesn't cover something, say so explicitly."
+    "You are DayDive AI, an intelligent, structured, and encouraging study tutor for students. "
+    "Adapt your response style to the user's request:\n"
+    "- For broad requests (summaries, unit overviews, 'explain this document', key concepts), "
+    "begin with a 1-sentence big-picture orientation, then organize the material into clear numbered sections "
+    "with bolded key terms, concise bullet explanations, and Markdown comparison tables whenever contrasting concepts. "
+    "End with a brief offer for a deeper dive or practice questions.\n"
+    "- For specific questions, give a direct, clear explanation with examples from the material.\n"
+    "- Ground your answers ONLY in the provided study material when material is attached. "
+    "If a topic is not covered in the excerpts, say so explicitly without inventing facts."
 )
 
 SUMMARY_PROMPTS = {
     "quick": (
-        "Summarize the following study material in 4–6 sentences. "
-        "Focus on the core idea and what a student absolutely must remember. "
-        "Use plain, clear language.\n\nMaterial:\n{content}"
+        "Summarize the following study material in 5–7 clear sentences. "
+        "Open with what the material covers overall, then highlight the core concepts a student must remember.\n\nMaterial:\n{content}"
     ),
     "detailed": (
-        "Provide a detailed summary of the following study material. "
-        "Organize it into short paragraphs with clear structure. "
-        "Cover definitions, key concepts, and important relationships.\n\nMaterial:\n{content}"
+        "Provide a comprehensive, well-structured study summary of the material below. "
+        "Open with a 1-sentence overview, then organize into numbered sections with bolded key terms, "
+        "concise bullet explanations, and a Markdown comparison table if concepts are contrasted.\n\nMaterial:\n{content}"
     ),
     "points": (
-        "Extract the most important points from the following study material as a "
-        "clean bullet list (8–12 bullets). Each bullet must be a single, exam-ready "
-        "fact or concept. No intro sentence.\n\nMaterial:\n{content}"
+        "Extract the most important exam-ready points from the study material as a "
+        "clean bullet list (10–14 bullets) grouped logically if helpful. Each bullet must capture a concrete "
+        "definition, rule, or distinction.\n\nMaterial:\n{content}"
     ),
 }
 
@@ -79,6 +84,11 @@ Material:
 {content}
 """
 
+BROAD_INTENT_PATTERN = re.compile(
+    r"\b(summarize|summary|summarise|overview|recap|outline|explain (the )?(whole|entire|all|unit|chapter|pdf|document|notes)|key (concepts|points|topics|takeaways)|what is this (about|covering)|topics covered)\b",
+    re.IGNORECASE,
+)
+
 
 def _filter_chunks(doc: Document, pages: Optional[List[int]]) -> List[dict]:
     chunks = doc.chunks or []
@@ -88,10 +98,32 @@ def _filter_chunks(doc: Document, pages: Optional[List[int]]) -> List[dict]:
     return [c for c in chunks if c.get("page") in s]
 
 
-def _join_text(chunks: List[dict], max_chars: int = 12000) -> str:
+def _join_text(chunks: List[dict], max_chars: int = 14000) -> str:
     parts = [c["text"] for c in chunks]
     text = "\n\n".join(parts)
     return text[:max_chars]
+
+
+def _sample_evenly(chunks: List[dict], max_chunks: int = 16, max_chars: int = 14000) -> List[dict]:
+    """Select evenly spaced chunks across the document so broad summaries see the full arc."""
+    if not chunks:
+        return []
+    if len(chunks) <= max_chunks:
+        selected = chunks
+    else:
+        step = (len(chunks) - 1) / (max_chunks - 1)
+        indices = sorted({round(i * step) for i in range(max_chunks)})
+        selected = [chunks[i] for i in indices]
+
+    result = []
+    total_chars = 0
+    for c in selected:
+        txt = c.get("text", "")
+        if total_chars + len(txt) > max_chars and result:
+            break
+        result.append(c)
+        total_chars += len(txt)
+    return result
 
 
 # --------------------- Summary ---------------------
@@ -108,13 +140,14 @@ async def generate_summary(
     if not chunks:
         raise HTTPException(status_code=400, detail="No content available for the selected pages.")
 
-    content = _join_text(chunks)
+    sampled = _sample_evenly(chunks, max_chunks=18, max_chars=14000)
+    content = _join_text(sampled, max_chars=14000)
     template = SUMMARY_PROMPTS.get(style)
     if not template:
         raise HTTPException(status_code=400, detail="Invalid summary style.")
 
     prompt = template.format(content=content)
-    return (await ai_service.generate(prompt, system=SYSTEM_PROMPT, temperature=0.3)).strip()
+    return (await ai_service.generate(prompt, system=SYSTEM_PROMPT, temperature=0.25, max_tokens=4096)).strip()
 
 
 # --------------------- Chat (RAG) ---------------------
@@ -132,19 +165,32 @@ async def chat(
 
     if document_id:
         doc = await document_service.get_document(db, document_id, user_id)
+        doc_chunks = _filter_chunks(doc, pages)
+        is_broad = bool(BROAD_INTENT_PATTERN.search(message or ""))
 
-        hits = rag_service.retrieve(doc.chunks or [], message, top_k=4, pages_filter=pages)
+        if is_broad:
+            hits = _sample_evenly(doc_chunks, max_chunks=16, max_chars=14000)
+        else:
+            hits = rag_service.retrieve(doc_chunks, message, top_k=8, pages_filter=pages)
+            # Sort selected chunks by page order for coherent reading
+            hits = sorted(hits, key=lambda h: (h.get("page") or 0))
+
         if hits:
             context_block = "\n\n".join(
                 f"[Page {h['page']}]\n{h['text']}" for h in hits
             )
-            sources = [
-                {"page": h["page"], "preview": h["text"][:140] + ("…" if len(h["text"]) > 140 else "")}
-                for h in hits
-            ]
+            seen_pages = set()
+            for h in hits:
+                p = h.get("page")
+                if p not in seen_pages:
+                    seen_pages.add(p)
+                    sources.append({
+                        "page": p,
+                        "preview": h["text"][:140] + ("…" if len(h["text"]) > 140 else ""),
+                    })
             system = SYSTEM_PROMPT + (
-                "\n\nUse ONLY the following excerpts from the student's uploaded material:\n\n"
-                f"{context_block}"
+                "\n\nUse ONLY the following excerpts from the student's uploaded material "
+                f"({doc.filename}):\n\n{context_block}"
             )
         else:
             system = SYSTEM_PROMPT + "\n\nNo relevant excerpts were found in the material."
@@ -152,11 +198,11 @@ async def chat(
         system = SYSTEM_PROMPT
 
     messages: List[dict] = [{"role": "system", "content": system}]
-    for h in history[-6:]:
+    for h in history[-8:]:
         messages.append(h)
     messages.append({"role": "user", "content": message})
 
-    reply = await ai_service.generate_chat(messages, temperature=0.4)
+    reply = await ai_service.generate_chat(messages, temperature=0.3, max_tokens=4096)
     return {"reply": reply.strip(), "sources": sources}
 
 
@@ -175,10 +221,11 @@ async def generate_flashcards(
     if not chunks:
         raise HTTPException(status_code=400, detail="No content available for the selected pages.")
 
-    content = _join_text(chunks, max_chars=12000)
+    sampled = _sample_evenly(chunks, max_chunks=16, max_chars=14000)
+    content = _join_text(sampled, max_chars=14000)
     prompt = FLASHCARD_PROMPT.format(content=content, count=count, difficulty=difficulty)
 
-    data = await ai_service.generate_json(prompt, system=SYSTEM_PROMPT, temperature=0.6)
+    data = await ai_service.generate_json(prompt, system=SYSTEM_PROMPT, temperature=0.4)
 
     if not isinstance(data, list):
         raise HTTPException(status_code=502, detail="AI returned an unexpected format.")
@@ -191,7 +238,6 @@ async def generate_flashcards(
     if not cards:
         raise HTTPException(status_code=502, detail="AI returned no valid flashcards.")
 
-    # Save to practice history
     record = PracticeRecord(
         user_id=user_id,
         document_id=document_id,
@@ -222,10 +268,11 @@ async def generate_quiz(
     if not chunks:
         raise HTTPException(status_code=400, detail="No content available for the selected pages.")
 
-    content = _join_text(chunks, max_chars=12000)
+    sampled = _sample_evenly(chunks, max_chunks=16, max_chars=14000)
+    content = _join_text(sampled, max_chars=14000)
     prompt = QUIZ_PROMPT.format(content=content, count=count, difficulty=difficulty)
 
-    data = await ai_service.generate_json(prompt, system=SYSTEM_PROMPT, temperature=0.5)
+    data = await ai_service.generate_json(prompt, system=SYSTEM_PROMPT, temperature=0.35)
 
     if not isinstance(data, list):
         raise HTTPException(status_code=502, detail="AI returned an unexpected format.")
@@ -251,7 +298,6 @@ async def generate_quiz(
     if not questions:
         raise HTTPException(status_code=502, detail="AI returned no valid quiz questions.")
 
-    # Save to practice history
     record = PracticeRecord(
         user_id=user_id,
         document_id=document_id,

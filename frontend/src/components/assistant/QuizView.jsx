@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { documentApi, assistantApi } from '../../services/api';
 import PagesSelector from './PagesSelector';
-import { ArrowLeft, Sparkles, Loader2, Check, X, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Sparkles, Loader2, Check, X, RotateCcw, ClipboardCheck, Award } from 'lucide-react';
 
 const COUNTS = [5, 10, 15, 20];
 const DIFFS = [
@@ -30,7 +30,6 @@ export default function QuizView({ onBack, initialDocId, initialRecord }) {
 
   const doc = documents.find((d) => Number(d.id) === Number(docId));
 
-  // If opened from history, load record directly
   useEffect(() => {
     if (initialRecord && Array.isArray(initialRecord.data)) {
       setQuestions(initialRecord.data);
@@ -62,28 +61,24 @@ export default function QuizView({ onBack, initialDocId, initialRecord }) {
   }, [docId]);
 
   const togglePage = (n) =>
-    setSelectedPages((prev) => prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]);
+    setSelectedPages((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
 
   const buildPagesPayload = () => {
-    if (!doc) return null;
-    if (pagesMode === 'all') return null;
+    if (!doc || pagesMode === 'all') return null;
     if (pagesMode === 'range') {
       const s = Math.max(1, Math.min(rangeStart, doc.page_count));
       const e = Math.max(s, Math.min(rangeEnd, doc.page_count));
-      const arr = [];
-      for (let i = s; i <= e; i++) arr.push(i);
-      return arr;
+      return Array.from({ length: e - s + 1 }, (_, i) => s + i);
     }
-    return selectedPages.sort((a, b) => a - b);
+    return [...selectedPages].sort((a, b) => a - b);
   };
 
   const handleGenerate = async () => {
     setError('');
-    if (!docId) { setError('Select a document first.'); return; }
+    if (!docId) return setError('Select a document first.');
     const pages = buildPagesPayload();
     if (pagesMode !== 'all' && (!pages || pages.length === 0)) {
-      setError('Select at least one page.');
-      return;
+      return setError('Select at least one page.');
     }
     setLoading(true);
     try {
@@ -115,9 +110,7 @@ export default function QuizView({ onBack, initialDocId, initialRecord }) {
     else setShowReview(true);
   };
 
-  const handlePrev = () => {
-    if (index > 0) setIndex(index - 1);
-  };
+  const handlePrev = () => { if (index > 0) setIndex(index - 1); };
 
   const reset = () => {
     setQuestions(null);
@@ -140,39 +133,34 @@ export default function QuizView({ onBack, initialDocId, initialRecord }) {
     return (
       <div className="space-y-5">
         <button
+          type="button"
           onClick={onBack}
-          className="flex items-center gap-2 text-[#6B7280] hover:text-[#1B4332] transition text-sm"
+          className="flex items-center gap-2 text-[#8E8E93] hover:text-white transition text-sm font-medium"
         >
           <ArrowLeft size={16} /> Back to Practice
         </button>
 
-        <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-lg">📝</span>
-            <h2 className="text-lg font-semibold text-[#1F2937]">Create Quiz</h2>
+        <div className="card p-6">
+          <div className="flex items-center gap-2.5 mb-1">
+            <ClipboardCheck size={20} className="text-[#10B981]" />
+            <h2 className="text-lg font-bold text-white">Create Quiz</h2>
           </div>
-          <p className="text-[#6B7280] text-sm mb-5">Test your understanding with MCQs.</p>
+          <p className="text-[#8E8E93] text-sm mb-5">Test your understanding with MCQs.</p>
 
           {error && (
-            <div className="bg-[#FDECEC] border border-[#D14343]/30 text-[#D14343] px-4 py-3 rounded-[14px] mb-4 text-sm">
+            <div className="bg-[#2D1616] border border-[#EF4444]/40 text-[#EF4444] px-4 py-3 rounded-[14px] mb-4 text-sm">
               {error}
             </div>
           )}
 
           <div className="mb-5">
-            <label className="block text-[#4B5563] text-sm font-medium mb-1.5">Document</label>
+            <label className="block text-white text-sm font-semibold mb-1.5">Document</label>
             {documents.length === 0 ? (
-              <p className="text-[#9CA3AF] text-sm">Upload a document first.</p>
+              <p className="text-[#8E8E93] text-sm">Upload a document first.</p>
             ) : (
-              <select
-                value={docId}
-                onChange={(e) => setDocId(e.target.value)}
-                className="w-full bg-white border border-[#E8ECE7] rounded-[14px] px-4 py-3 text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] transition-all text-sm"
-              >
+              <select value={docId} onChange={(e) => setDocId(e.target.value)} className="input-field text-sm">
                 {documents.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.filename} · {d.page_count} pages
-                  </option>
+                  <option key={d.id} value={d.id}>{d.filename} · {d.page_count} pages</option>
                 ))}
               </select>
             )}
@@ -180,7 +168,7 @@ export default function QuizView({ onBack, initialDocId, initialRecord }) {
 
           {doc && (
             <div className="mb-5">
-              <label className="block text-[#4B5563] text-sm font-medium mb-1.5">Pages</label>
+              <label className="block text-white text-sm font-semibold mb-1.5">Pages</label>
               <PagesSelector
                 pageCount={doc.page_count}
                 mode={pagesMode}
@@ -196,17 +184,17 @@ export default function QuizView({ onBack, initialDocId, initialRecord }) {
           )}
 
           <div className="mb-5">
-            <label className="block text-[#4B5563] text-sm font-medium mb-1.5">Questions</label>
+            <label className="block text-white text-sm font-semibold mb-1.5">Questions</label>
             <div className="grid grid-cols-4 gap-2">
               {COUNTS.map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setCount(c)}
-                  className={`py-2.5 rounded-[14px] text-sm font-medium transition ${
+                  className={`py-2.5 rounded-[14px] text-sm font-semibold transition ${
                     count === c
-                      ? 'bg-[#1B4332] text-white'
-                      : 'bg-white border border-[#E8ECE7] text-[#4B5563] hover:bg-[#EDF4EE]'
+                      ? 'bg-[#E66A10] text-white'
+                      : 'bg-[#232325] border border-[#2E2E32] text-[#8E8E93] hover:text-white'
                   }`}
                 >
                   {c}
@@ -216,17 +204,17 @@ export default function QuizView({ onBack, initialDocId, initialRecord }) {
           </div>
 
           <div className="mb-6">
-            <label className="block text-[#4B5563] text-sm font-medium mb-1.5">Difficulty</label>
+            <label className="block text-white text-sm font-semibold mb-1.5">Difficulty</label>
             <div className="grid grid-cols-3 gap-2">
               {DIFFS.map((d) => (
                 <button
                   key={d.id}
                   type="button"
                   onClick={() => setDifficulty(d.id)}
-                  className={`py-2.5 rounded-[14px] text-sm font-medium transition ${
+                  className={`py-2.5 rounded-[14px] text-sm font-semibold transition ${
                     difficulty === d.id
-                      ? 'bg-[#1B4332] text-white'
-                      : 'bg-white border border-[#E8ECE7] text-[#4B5563] hover:bg-[#EDF4EE]'
+                      ? 'bg-[#E66A10] text-white'
+                      : 'bg-[#232325] border border-[#2E2E32] text-[#8E8E93] hover:text-white'
                   }`}
                 >
                   {d.label}
@@ -236,20 +224,15 @@ export default function QuizView({ onBack, initialDocId, initialRecord }) {
           </div>
 
           <button
+            type="button"
             onClick={handleGenerate}
             disabled={loading || !docId}
-            className="w-full bg-[#1B4332] hover:bg-[#24543F] text-white font-semibold py-3 rounded-[14px] transition flex items-center justify-center gap-2 disabled:opacity-50"
+            className="btn-primary w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                Preparing your quiz...
-              </>
+              <><Loader2 size={18} className="animate-spin" /> Preparing your quiz...</>
             ) : (
-              <>
-                <Sparkles size={18} />
-                Generate Quiz
-              </>
+              <><Sparkles size={18} /> Generate Quiz</>
             )}
           </button>
         </div>
@@ -259,84 +242,68 @@ export default function QuizView({ onBack, initialDocId, initialRecord }) {
 
   if (showReview) {
     const percentage = Math.round((score / questions.length) * 100);
-
     return (
       <div className="space-y-5">
-        <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-8 text-center">
-          <div className="text-5xl mb-3">🎉</div>
-          <h2 className="text-xl font-bold text-[#1F2937] mb-1">Quiz Complete</h2>
-          <div className="text-4xl font-bold text-[#1B4332] my-4">
+        <div className="card p-8 text-center">
+          <div className="w-12 h-12 bg-[#0F2922] border border-[#10B981]/30 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <Award size={24} className="text-[#10B981]" />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-1">Quiz Complete</h2>
+          <div className="text-4xl font-extrabold text-[#FF841C] my-4">
             {score} / {questions.length}
           </div>
-          <p className="text-[#6B7280] text-sm mb-6">{percentage}%</p>
+          <p className="text-[#8E8E93] text-sm mb-6">{percentage}% accuracy</p>
 
           <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto mb-6">
-            <div className="bg-[#EAF8EC] rounded-[14px] p-3">
-              <p className="text-2xl font-bold text-[#2E7D32]">{score}</p>
-              <p className="text-[#4B5563] text-xs">Correct</p>
+            <div className="bg-[#0F2922] border border-[#10B981]/30 rounded-[14px] p-3">
+              <p className="text-2xl font-extrabold text-[#10B981]">{score}</p>
+              <p className="text-[#8E8E93] text-xs">Correct</p>
             </div>
-            <div className="bg-[#FDECEC] rounded-[14px] p-3">
-              <p className="text-2xl font-bold text-[#D14343]">
-                {questions.length - score}
-              </p>
-              <p className="text-[#4B5563] text-xs">Incorrect</p>
+            <div className="bg-[#2D1616] border border-[#EF4444]/30 rounded-[14px] p-3">
+              <p className="text-2xl font-extrabold text-[#EF4444]">{questions.length - score}</p>
+              <p className="text-[#8E8E93] text-xs">Incorrect</p>
             </div>
           </div>
 
           <div className="flex gap-3">
-            <button
-              onClick={retry}
-              className="flex-1 bg-white border border-[#E8ECE7] hover:bg-[#EDF4EE] text-[#4B5563] py-3 rounded-[14px] font-medium transition flex items-center justify-center gap-2"
-            >
+            <button type="button" onClick={retry} className="flex-1 btn-secondary py-3 flex items-center justify-center gap-2">
               <RotateCcw size={16} /> Try Again
             </button>
-            <button
-              onClick={reset}
-              className="flex-1 bg-[#1B4332] hover:bg-[#24543F] text-white py-3 rounded-[14px] font-medium transition"
-            >
+            <button type="button" onClick={reset} className="flex-1 btn-primary py-3">
               New Quiz
             </button>
           </div>
         </div>
 
-        <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
-          <h3 className="text-lg font-semibold text-[#1F2937] mb-4">Review Answers</h3>
+        <div className="card p-6">
+          <h3 className="text-lg font-bold text-white mb-4">Review Answers</h3>
           <div className="space-y-4">
             {questions.map((q, i) => {
               const user = answers[i];
               const correct = user === q.correct_index;
               return (
-                <div key={i} className="border-b border-[#E8ECE7]/60 pb-4 last:border-0 last:pb-0">
-                  <div className="flex items-start gap-2 mb-2">
+                <div key={i} className="border-b border-[#2E2E32] pb-4 last:border-0 last:pb-0">
+                  <div className="flex items-start gap-2.5 mb-2">
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                      correct ? 'bg-[#EAF8EC]' : 'bg-[#FDECEC]'
+                      correct ? 'bg-[#0F2922]' : 'bg-[#2D1616]'
                     }`}>
-                      {correct
-                        ? <Check size={12} className="text-[#2E7D32]" />
-                        : <X size={12} className="text-[#D14343]" />}
+                      {correct ? <Check size={12} className="text-[#10B981]" /> : <X size={12} className="text-[#EF4444]" />}
                     </div>
-                    <p className="text-[#1F2937] text-sm font-medium">
-                      Q{i + 1}. {q.question}
-                    </p>
+                    <p className="text-white text-sm font-semibold">Q{i + 1}. {q.question}</p>
                   </div>
                   <div className="ml-7 space-y-1 text-xs">
-                    <p className="text-[#6B7280]">
+                    <p className="text-[#8E8E93]">
                       Your answer:{' '}
-                      <span className={correct ? 'text-[#2E7D32] font-medium' : 'text-[#D14343] font-medium'}>
+                      <span className={correct ? 'text-[#10B981] font-semibold' : 'text-[#EF4444] font-semibold'}>
                         {user != null ? q.options[user] : '—'}
                       </span>
                     </p>
                     {!correct && (
-                      <p className="text-[#6B7280]">
-                        Correct answer:{' '}
-                        <span className="text-[#2E7D32] font-medium">
-                          {q.options[q.correct_index]}
-                        </span>
+                      <p className="text-[#8E8E93]">
+                        Correct answer: <span className="text-[#10B981] font-semibold">{q.options[q.correct_index]}</span>
                       </p>
                     )}
-                    {q.explanation && (
-                      <p className="text-[#6B7280] italic mt-1">{q.explanation}</p>
-                    )}
+                    {q.explanation && <p className="text-[#D1D5DB] italic mt-1">{q.explanation}</p>}
                   </div>
                 </div>
               );
@@ -354,41 +321,32 @@ export default function QuizView({ onBack, initialDocId, initialRecord }) {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-[#6B7280] hover:text-[#1B4332] transition text-sm"
-        >
+        <button type="button" onClick={onBack} className="flex items-center gap-2 text-[#8E8E93] hover:text-white transition text-sm font-medium">
           <ArrowLeft size={16} /> Exit Quiz
         </button>
-        <span className="text-[#6B7280] text-sm">
-          Question {index + 1} / {questions.length}
-        </span>
+        <span className="text-[#8E8E93] text-sm font-medium">Question {index + 1} / {questions.length}</span>
       </div>
 
-      <div className="w-full h-1 bg-[#EDF4EE] rounded-full overflow-hidden">
-        <div
-          className="h-full bg-[#1B4332] rounded-full transition-all"
-          style={{ width: `${progress}%` }}
-        />
+      <div className="w-full h-1.5 bg-[#232325] rounded-full overflow-hidden">
+        <div className="h-full bg-[#FF841C] rounded-full transition-all" style={{ width: `${progress}%` }} />
       </div>
 
-      <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
-        <p className="text-[#1F2937] text-lg font-semibold leading-relaxed mb-6">
-          {q.question}
-        </p>
+      <div className="card p-6">
+        <p className="text-white text-lg font-bold leading-relaxed mb-6">{q.question}</p>
         <div className="space-y-2.5">
           {q.options.map((opt, i) => (
             <button
               key={i}
+              type="button"
               onClick={() => selectOption(i)}
               className={`w-full text-left px-4 py-3 rounded-[14px] border transition flex items-center gap-3 ${
                 user === i
-                  ? 'bg-[#1B4332] border-[#1B4332] text-white'
-                  : 'bg-white border-[#E8ECE7] text-[#4B5563] hover:bg-[#EDF4EE]'
+                  ? 'bg-[#E66A10] border-[#E66A10] text-white font-semibold'
+                  : 'bg-[#232325] border-[#2E2E32] text-[#D1D5DB] hover:border-[#FF841C]/50'
               }`}
             >
-              <span className={`w-6 h-6 rounded-full border flex items-center justify-center text-xs font-medium flex-shrink-0 ${
-                user === i ? 'border-white/40 bg-white/10' : 'border-[#E8ECE7]'
+              <span className={`w-6 h-6 rounded-full border flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                user === i ? 'border-white/40 bg-white/15 text-white' : 'border-[#2E2E32] text-[#8E8E93]'
               }`}>
                 {String.fromCharCode(65 + i)}
               </span>
@@ -400,17 +358,19 @@ export default function QuizView({ onBack, initialDocId, initialRecord }) {
 
       <div className="flex items-center justify-between">
         <button
+          type="button"
           onClick={handlePrev}
           disabled={index === 0}
-          className="text-[#4B5563] hover:text-[#1B4332] px-4 py-2.5 rounded-[14px] border border-[#E8ECE7] bg-white disabled:opacity-40 disabled:cursor-not-allowed transition"
+          className="btn-secondary px-4 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Previous
         </button>
 
         <button
+          type="button"
           onClick={handleNext}
           disabled={user == null}
-          className="bg-[#1B4332] hover:bg-[#24543F] text-white px-6 py-2.5 rounded-[14px] font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+          className="btn-primary px-6 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {index === questions.length - 1 ? 'Finish' : 'Next'}
         </button>

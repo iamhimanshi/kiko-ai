@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { documentApi } from '../../services/api';
-import {
-  Upload, FileText, Trash2, Loader2, CheckCircle, AlertCircle, X,
-} from 'lucide-react';
+import { Upload, FileText, Trash2, Loader2, CheckCircle, AlertCircle, X, BookOpen } from 'lucide-react';
 
 export default function DocumentsTab({ onDocumentReady }) {
   const [documents, setDocuments] = useState([]);
@@ -24,9 +22,7 @@ export default function DocumentsTab({ onDocumentReady }) {
     }
   };
 
-  useEffect(() => {
-    loadDocuments();
-  }, []);
+  useEffect(() => { loadDocuments(); }, []);
 
   const handleUpload = async (file) => {
     if (!file) return;
@@ -34,7 +30,6 @@ export default function DocumentsTab({ onDocumentReady }) {
       setError('Only PDF files are supported.');
       return;
     }
-
     setError('');
     setUploading(true);
     const formData = new FormData();
@@ -77,25 +72,23 @@ export default function DocumentsTab({ onDocumentReady }) {
 
   return (
     <div className="space-y-6">
-      {/* Upload zone */}
-      <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
+      <div className="card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[#1F2937]">My Study Materials</h2>
-          <span className="text-[#6B7280] text-xs">
+          <h2 className="text-lg font-bold text-white">My Study Materials</h2>
+          <span className="text-[#8E8E93] text-xs font-medium">
             {documents.length} {documents.length === 1 ? 'file' : 'files'}
           </span>
         </div>
 
         {error && (
-          <div className="bg-[#FDECEC] border border-[#D14343]/30 text-[#D14343] px-4 py-3 rounded-[14px] mb-4 text-sm flex items-start justify-between">
+          <div className="bg-[#2D1616] border border-[#EF4444]/40 text-[#EF4444] px-4 py-3 rounded-[14px] mb-4 text-sm flex items-start justify-between">
             <span>{error}</span>
-            <button onClick={() => setError('')} className="text-[#D14343]/70 hover:text-[#D14343]">
+            <button type="button" onClick={() => setError('')} className="text-[#EF4444]/70 hover:text-[#EF4444]">
               <X size={16} />
             </button>
           </div>
         )}
 
-        {/* Dropzone */}
         <div
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
@@ -103,25 +96,23 @@ export default function DocumentsTab({ onDocumentReady }) {
           onClick={() => !uploading && fileInputRef.current?.click()}
           className={`border-2 border-dashed rounded-[18px] p-8 text-center cursor-pointer transition ${
             dragOver
-              ? 'border-[#1B4332] bg-[#EEF7F0]'
-              : 'border-[#E8ECE7] hover:border-[#1B4332]/40 hover:bg-[#F8F7F2]'
+              ? 'border-[#FF841C] bg-[#261A10]'
+              : 'border-[#2E2E32] hover:border-[#FF841C]/50 hover:bg-[#232325]'
           } ${uploading ? 'opacity-60 cursor-wait' : ''}`}
         >
           {uploading ? (
             <>
-              <Loader2 size={32} className="text-[#1B4332] mx-auto mb-3 animate-spin" />
-              <p className="text-[#1F2937] font-medium">Processing your file...</p>
-              <p className="text-[#6B7280] text-xs mt-1">Extracting text and indexing</p>
+              <Loader2 size={32} className="text-[#FF841C] mx-auto mb-3 animate-spin" />
+              <p className="text-white font-semibold">Processing your file...</p>
+              <p className="text-[#8E8E93] text-xs mt-1">Extracting text and indexing</p>
             </>
           ) : (
             <>
-              <div className="w-12 h-12 bg-[#EEF7F0] rounded-xl flex items-center justify-center mx-auto mb-3">
-                <Upload className="text-[#1B4332]" size={22} />
+              <div className="w-12 h-12 bg-[#232325] border border-[#2E2E32] rounded-xl flex items-center justify-center mx-auto mb-3">
+                <Upload className="text-[#FF841C]" size={22} />
               </div>
-              <p className="text-[#1F2937] font-medium">
-                Drop your PDF here or click to browse
-              </p>
-              <p className="text-[#6B7280] text-xs mt-1">PDF only · Max 10 MB</p>
+              <p className="text-white font-semibold">Drop your PDF here or click to browse</p>
+              <p className="text-[#8E8E93] text-xs mt-1">PDF only · Max 10 MB</p>
             </>
           )}
           <input
@@ -134,50 +125,49 @@ export default function DocumentsTab({ onDocumentReady }) {
         </div>
       </div>
 
-      {/* Document list */}
-      <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
-        <h2 className="text-lg font-semibold text-[#1F2937] mb-4">Library</h2>
+      <div className="card p-6">
+        <h2 className="text-lg font-bold text-white mb-4">Library</h2>
 
         {loading ? (
-          <div className="text-center py-8 text-[#6B7280] text-sm">Loading...</div>
+          <div className="text-center py-8 text-[#8E8E93] text-sm">Loading...</div>
         ) : documents.length === 0 ? (
           <div className="text-center py-10">
-            <div className="text-5xl mb-3">📚</div>
-            <p className="text-[#1F2937] font-medium">Your study library is empty</p>
-            <p className="text-[#6B7280] text-sm mt-1">
+            <div className="w-12 h-12 bg-[#232325] border border-[#2E2E32] rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <BookOpen className="text-[#8E8E93]" size={22} />
+            </div>
+            <p className="text-white font-semibold">Your study library is empty</p>
+            <p className="text-[#8E8E93] text-sm mt-1">
               Upload your first PDF to get summaries, flashcards, quizzes and more.
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {documents.map((doc) => (
               <div
                 key={doc.id}
-                className="flex items-center justify-between gap-4 p-4 bg-[#F8F7F2] rounded-[14px] hover:bg-[#EEF7F0] transition group"
+                className="flex items-center justify-between gap-4 p-4 bg-[#232325] border border-[#2E2E32] rounded-[14px] hover:border-[#FF841C]/40 transition group"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="w-10 h-10 bg-[#EEF7F0] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <FileText className="text-[#1B4332]" size={18} />
+                  <div className="w-10 h-10 bg-[#1A1A1A] border border-[#2E2E32] rounded-lg flex items-center justify-center flex-shrink-0">
+                    <FileText className="text-[#FF841C]" size={18} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[#1F2937] font-medium text-sm truncate">
-                      {doc.filename}
-                    </p>
-                    <div className="flex items-center gap-3 text-[#6B7280] text-xs mt-0.5">
+                    <p className="text-white font-semibold text-sm truncate">{doc.filename}</p>
+                    <div className="flex items-center gap-3 text-[#8E8E93] text-xs mt-0.5">
                       <span>{doc.page_count} pages</span>
-                      <span className="w-1 h-1 bg-[#E8ECE7] rounded-full"></span>
+                      <span className="w-1 h-1 bg-[#2E2E32] rounded-full"></span>
                       <span>{formatSize(doc.file_size)}</span>
-                      <span className="w-1 h-1 bg-[#E8ECE7] rounded-full"></span>
+                      <span className="w-1 h-1 bg-[#2E2E32] rounded-full"></span>
                       {doc.status === 'ready' ? (
-                        <span className="flex items-center gap-1 text-[#2E7D32]">
+                        <span className="flex items-center gap-1 text-[#10B981] font-medium">
                           <CheckCircle size={12} /> Ready
                         </span>
                       ) : doc.status === 'failed' ? (
-                        <span className="flex items-center gap-1 text-[#D14343]">
+                        <span className="flex items-center gap-1 text-[#EF4444]">
                           <AlertCircle size={12} /> Failed
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-[#D4A64A]">
+                        <span className="flex items-center gap-1 text-[#FF841C]">
                           <Loader2 size={12} className="animate-spin" /> Processing
                         </span>
                       )}
@@ -188,15 +178,17 @@ export default function DocumentsTab({ onDocumentReady }) {
                 <div className="flex items-center gap-2">
                   {onDocumentReady && doc.status === 'ready' && (
                     <button
+                      type="button"
                       onClick={() => onDocumentReady(doc.id)}
-                      className="text-[#1B4332] text-xs font-medium hover:underline"
+                      className="text-[#FF841C] text-xs font-semibold hover:underline px-2 py-1"
                     >
                       Select
                     </button>
                   )}
                   <button
+                    type="button"
                     onClick={() => handleDelete(doc.id)}
-                    className="text-[#9CA3AF] hover:text-[#D14343] p-2 rounded-lg transition"
+                    className="text-[#8E8E93] hover:text-[#EF4444] p-2 rounded-lg transition"
                     title="Delete"
                   >
                     <Trash2 size={16} />
