@@ -111,7 +111,7 @@ function BrandLogo({ size = 'md' }) {
 }
 
 export default function Landing() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState(0);
 
@@ -123,7 +123,6 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-[#121212] text-white">
-      {/* Navbar */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#121212]/90 backdrop-blur-md border-b border-[#2E2E32]">
         <div className="max-w-7xl mx-auto px-6 md:px-8 py-3.5 flex items-center justify-between">
           <Link to="/" className="focus:outline-none">
@@ -131,26 +130,32 @@ export default function Landing() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[#8E8E93]">
-            <button onClick={() => scrollToSection('features')} className="hover:text-white transition">Features</button>
-            <button onClick={() => scrollToSection('how-it-works')} className="hover:text-white transition">How It Works</button>
-            <button onClick={() => scrollToSection('developers')} className="hover:text-white transition">Team</button>
-            <button onClick={() => scrollToSection('faq')} className="hover:text-white transition">FAQ</button>
+            <button type="button" onClick={() => scrollToSection('features')} className="hover:text-white transition">Features</button>
+            <button type="button" onClick={() => scrollToSection('how-it-works')} className="hover:text-white transition">How It Works</button>
+            <button type="button" onClick={() => scrollToSection('developers')} className="hover:text-white transition">Team</button>
+            <button type="button" onClick={() => scrollToSection('faq')} className="hover:text-white transition">FAQ</button>
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <Link to="/dashboard" className="btn-primary text-sm px-5 py-2.5">Dashboard</Link>
+              <>
+                <button type="button" onClick={logout} className="text-[#8E8E93] hover:text-white px-3 py-2 text-sm font-semibold transition">
+                  Log Out
+                </button>
+                <Link to="/dashboard" className="btn-primary text-sm px-5 py-2.5">Dashboard</Link>
+              </>
             ) : (
               <>
                 <Link to="/login" className="text-[#D1D5DB] hover:text-white px-3 py-2 text-sm font-semibold transition">
                   Log In
                 </Link>
-                <Link to="/register" className="btn-primary text-sm px-5 py-2.5">Get Started</Link>
+                <Link to="/signup" className="btn-primary text-sm px-5 py-2.5">Get Started</Link>
               </>
             )}
           </div>
 
           <button
+            type="button"
             className="md:hidden text-white p-1"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle navigation menu"
@@ -161,17 +166,20 @@ export default function Landing() {
 
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#1A1A1A] border-b border-[#2E2E32] px-6 py-4 space-y-3">
-            <button onClick={() => scrollToSection('features')} className="block w-full text-left text-[#D1D5DB] hover:text-white font-medium py-2 transition">Features</button>
-            <button onClick={() => scrollToSection('how-it-works')} className="block w-full text-left text-[#D1D5DB] hover:text-white font-medium py-2 transition">How It Works</button>
-            <button onClick={() => scrollToSection('developers')} className="block w-full text-left text-[#D1D5DB] hover:text-white font-medium py-2 transition">Team</button>
-            <button onClick={() => scrollToSection('faq')} className="block w-full text-left text-[#D1D5DB] hover:text-white font-medium py-2 transition">FAQ</button>
+            <button type="button" onClick={() => scrollToSection('features')} className="block w-full text-left text-[#D1D5DB] hover:text-white font-medium py-2 transition">Features</button>
+            <button type="button" onClick={() => scrollToSection('how-it-works')} className="block w-full text-left text-[#D1D5DB] hover:text-white font-medium py-2 transition">How It Works</button>
+            <button type="button" onClick={() => scrollToSection('developers')} className="block w-full text-left text-[#D1D5DB] hover:text-white font-medium py-2 transition">Team</button>
+            <button type="button" onClick={() => scrollToSection('faq')} className="block w-full text-left text-[#D1D5DB] hover:text-white font-medium py-2 transition">FAQ</button>
             <div className="pt-3 border-t border-[#2E2E32] flex flex-col gap-3">
               {user ? (
-                <Link to="/dashboard" className="btn-primary text-center">Dashboard</Link>
+                <>
+                  <Link to="/dashboard" className="btn-primary text-center">Dashboard</Link>
+                  <button type="button" onClick={logout} className="btn-secondary text-center">Log Out</button>
+                </>
               ) : (
                 <>
                   <Link to="/login" className="btn-secondary text-center">Log In</Link>
-                  <Link to="/register" className="btn-primary text-center">Get Started</Link>
+                  <Link to="/signup" className="btn-primary text-center">Get Started</Link>
                 </>
               )}
             </div>
@@ -202,10 +210,11 @@ export default function Landing() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Link to="/register" className="btn-primary inline-flex items-center justify-center gap-2 text-base px-8 py-3.5">
-                  Start Diving Free <ArrowRight size={18} />
+                <Link to={user ? '/dashboard' : '/signup'} className="btn-primary inline-flex items-center justify-center gap-2 text-base px-8 py-3.5">
+                  {user ? 'Go to Dashboard' : 'Start Diving Free'} <ArrowRight size={18} />
                 </Link>
                 <button
+                  type="button"
                   onClick={() => scrollToSection('how-it-works')}
                   className="btn-secondary inline-flex items-center justify-center gap-2 text-base px-8 py-3.5"
                 >
@@ -229,7 +238,6 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Live Product Preview Card */}
             <div className="lg:col-span-5">
               <div className="bg-[#1A1A1A] rounded-[24px] p-6 text-white border border-[#2E2E32] shadow-card">
                 <div className="flex items-center justify-between pb-4 border-b border-[#2E2E32]">
@@ -400,10 +408,7 @@ export default function Landing() {
                     {PIPELINE_STEPS.map((item, idx) => {
                       const StepIcon = item.icon;
                       return (
-                        <div
-                          key={item.label}
-                          className="flex items-center gap-2.5 bg-[#1A1A1A] border border-[#2E2E32] rounded-xl px-3.5 py-2.5"
-                        >
+                        <div key={item.label} className="flex items-center gap-2.5 bg-[#1A1A1A] border border-[#2E2E32] rounded-xl px-3.5 py-2.5">
                           <StepIcon size={16} className="text-[#8E8E93] flex-shrink-0" />
                           <span className="text-sm font-semibold text-white">{idx + 1}. {item.label}</span>
                         </div>
@@ -512,8 +517,8 @@ export default function Landing() {
             <p className="text-[#8E8E93] mb-8 text-lg max-w-2xl mx-auto">
               Start learning with DayDive and turn every study block into focused, measurable progress.
             </p>
-            <Link to="/register" className="btn-primary inline-flex items-center gap-2 text-base px-8 py-3.5">
-              Get Started Free <ArrowRight size={18} />
+            <Link to={user ? '/dashboard' : '/signup'} className="btn-primary inline-flex items-center gap-2 text-base px-8 py-3.5">
+              {user ? 'Open Dashboard' : 'Get Started Free'} <ArrowRight size={18} />
             </Link>
           </div>
         </section>
@@ -561,10 +566,10 @@ export default function Landing() {
               <span className="hidden sm:inline">— Diving deeply into daily goals</span>
             </div>
             <div className="flex gap-6 font-medium">
-              <button onClick={() => scrollToSection('features')} className="hover:text-white transition">Features</button>
-              <button onClick={() => scrollToSection('how-it-works')} className="hover:text-white transition">How It Works</button>
-              <button onClick={() => scrollToSection('developers')} className="hover:text-white transition">Team</button>
-              <button onClick={() => scrollToSection('faq')} className="hover:text-white transition">FAQ</button>
+              <button type="button" onClick={() => scrollToSection('features')} className="hover:text-white transition">Features</button>
+              <button type="button" onClick={() => scrollToSection('how-it-works')} className="hover:text-white transition">How It Works</button>
+              <button type="button" onClick={() => scrollToSection('developers')} className="hover:text-white transition">Team</button>
+              <button type="button" onClick={() => scrollToSection('faq')} className="hover:text-white transition">FAQ</button>
             </div>
             <div>© 2026 DayDive</div>
           </div>

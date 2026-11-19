@@ -15,16 +15,15 @@ export default function Analytics() {
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="flex min-h-screen bg-[#FFF8F5]">
+    <div className="flex min-h-screen bg-[#121212] text-white">
       <Sidebar />
 
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="border-b border-[#E2E8F0] bg-white/80 backdrop-blur-sm px-8 pt-8">
+        <div className="border-b border-[#2E2E32] bg-[#1A1A1A] px-8 pt-8">
           <div className="mb-6">
-            <h1 className="text-4xl font-extrabold text-[#172033] tracking-tight">Analytics</h1>
-            <p className="text-[#64748B] text-sm mt-1">
-              Understand your study habits and improve your focus.
+            <h1 className="text-3xl font-extrabold text-white tracking-tight">Analytics</h1>
+            <p className="text-[#8E8E93] text-sm mt-1">
+              Insights into your study patterns, focus quality, and daily consistency.
             </p>
           </div>
           <div className="flex gap-2 overflow-x-auto">
@@ -38,8 +37,8 @@ export default function Analytics() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-t-[12px] text-sm font-semibold transition whitespace-nowrap border-b-2 ${
                     isActive
-                      ? 'text-[#FF5C5C] border-[#FF5C5C] bg-[#FFF0EB]/60'
-                      : 'text-[#64748B] hover:text-[#172554] hover:bg-[#FFF8F5] border-transparent'
+                      ? 'text-[#FF841C] border-[#FF841C] bg-[#232325]'
+                      : 'text-[#8E8E93] hover:text-white border-transparent'
                   }`}
                 >
                   <Icon size={16} />
@@ -50,9 +49,8 @@ export default function Analytics() {
           </div>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-8">
+          <div className="p-6 md:p-8">
             {activeTab === 'overview' && <OverviewTab />}
             {activeTab === 'sessions' && <SessionsTab />}
             {activeTab === 'trends' && <FocusTrendsTab />}

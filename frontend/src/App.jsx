@@ -14,6 +14,7 @@ import Assistant from './pages/Assistant';
 import MindGuard from './pages/MindGuard';
 import Analytics from './pages/Analytics';
 import SessionReportAnalytics from './pages/SessionReportAnalytics';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -38,15 +39,13 @@ function App() {
           {/* Assistant */}
           <Route path="/assistant" element={<ProtectedRoute><Assistant /></ProtectedRoute>} />
 
+          {/* Analytics */}
           <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+          <Route path="/analytics/session/:sessionId" element={<ProtectedRoute><SessionReportAnalytics /></ProtectedRoute>} />
 
-          <Route
-  path="/analytics/session/:sessionId"
-  element={<ProtectedRoute><SessionReportAnalytics /></ProtectedRoute>}
-/>
-
-          {/* MindGuard */}
+          {/* MindGuard & Settings */}
           <Route path="/mindguard" element={<ProtectedRoute><MindGuard /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

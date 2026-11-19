@@ -7,24 +7,24 @@ import ControlsTab from '../components/mindguard/ControlsTab';
 import { Activity, Radio, Chrome, Shield } from 'lucide-react';
 
 const TABS = [
-  { id: 'overview',  label: 'Overview',     icon: Activity },
-  { id: 'live',      label: 'Live Monitor', icon: Radio },
-  { id: 'controls',  label: 'Controls',     icon: Shield },
-  { id: 'extension', label: 'Extension',    icon: Chrome },
+  { id: 'overview', label: 'Overview', icon: Activity },
+  { id: 'live', label: 'Live Monitor', icon: Radio },
+  { id: 'controls', label: 'Controls', icon: Shield },
+  { id: 'extension', label: 'Extension', icon: Chrome },
 ];
 
 export default function MindGuard() {
   const [activeTab, setActiveTab] = useState('live');
 
   return (
-    <div className="flex min-h-screen bg-[#F8F7F2]">
+    <div className="flex min-h-screen bg-[#121212] text-white">
       <Sidebar />
 
       <main className="flex-1 flex flex-col overflow-hidden">
-        <div className="border-b border-[#E8ECE7]/50 bg-white/70 backdrop-blur-sm px-8 pt-8">
+        <div className="border-b border-[#2E2E32] bg-[#1A1A1A] px-8 pt-8">
           <div className="mb-6">
-            <h1 className="text-4xl font-bold text-[#1F2937] tracking-tight">MindGuard</h1>
-            <p className="text-[#6B7280] text-sm mt-1">
+            <h1 className="text-3xl font-extrabold text-white tracking-tight">MindGuard</h1>
+            <p className="text-[#8E8E93] text-sm mt-1">
               Your focus companion — understand and stay on track.
             </p>
           </div>
@@ -35,11 +35,12 @@ export default function MindGuard() {
               return (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-t-[12px] text-sm font-medium transition whitespace-nowrap border-b-2 ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-t-[12px] text-sm font-semibold transition whitespace-nowrap border-b-2 ${
                     isActive
-                      ? 'text-[#1B4332] border-[#1B4332]'
-                      : 'text-[#4B5563] hover:text-[#1B4332] border-transparent'
+                      ? 'text-[#FF841C] border-[#FF841C] bg-[#232325]'
+                      : 'text-[#8E8E93] hover:text-white border-transparent'
                   }`}
                 >
                   <Icon size={16} />
@@ -51,10 +52,10 @@ export default function MindGuard() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="p-8">
-            {activeTab === 'overview'  && <OverviewTab />}
-            {activeTab === 'live'      && <LiveMonitorTab />}
-            {activeTab === 'controls'  && <ControlsTab />}
+          <div className="p-6 md:p-8">
+            {activeTab === 'overview' && <OverviewTab />}
+            {activeTab === 'live' && <LiveMonitorTab />}
+            {activeTab === 'controls' && <ControlsTab />}
             {activeTab === 'extension' && <ExtensionTab />}
           </div>
         </div>

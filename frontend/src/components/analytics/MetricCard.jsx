@@ -1,21 +1,21 @@
 export default function MetricCard({ icon: Icon, label, value, sublabel, change, changeType, iconBg, iconColor }) {
   const isUp = changeType === 'up';
   return (
-    <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
-      <div className="flex items-start justify-between">
+    <div className="card p-5">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[#6B7280] text-sm">{label}</p>
-          <p className="text-2xl font-bold text-[#1F2937] mt-1 truncate">{value}</p>
+          <p className="text-[#8E8E93] text-xs font-medium">{label}</p>
+          <p className="text-2xl font-extrabold text-white mt-1 truncate">{value}</p>
           {change != null && (
-            <p className={`text-xs font-medium mt-1 ${isUp ? 'text-[#2E7D32]' : 'text-[#D14343]'}`}>
+            <p className={`text-xs font-semibold mt-1 ${isUp ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
               {isUp ? '↑' : '↓'} {Math.abs(change)}%
             </p>
           )}
-          {sublabel && <p className="text-[#9CA3AF] text-xs mt-1">{sublabel}</p>}
+          {sublabel && <p className="text-[#8E8E93] text-xs mt-1">{sublabel}</p>}
         </div>
         {Icon && (
-          <div className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBg || 'bg-[#EEF7F0]'}`}>
-            <Icon className={iconColor || 'text-[#1B4332]'} size={22} />
+          <div className={`w-10 h-10 rounded-xl border border-[#2E2E32] flex items-center justify-center flex-shrink-0 ${iconBg || 'bg-[#232325]'}`}>
+            <Icon className={iconColor || 'text-[#FF841C]'} size={20} />
           </div>
         )}
       </div>

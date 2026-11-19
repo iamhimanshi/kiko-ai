@@ -3,7 +3,7 @@ import { analyticsApi } from '../../services/api';
 import { Loader2, TrendingUp } from 'lucide-react';
 
 const RANGES = [
-  { id: '7d',  label: '7 Days' },
+  { id: '7d', label: '7 Days' },
   { id: '30d', label: '30 Days' },
   { id: '90d', label: '90 Days' },
 ];
@@ -45,11 +45,12 @@ export default function FocusTrendsTab() {
         {RANGES.map((r) => (
           <button
             key={r.id}
+            type="button"
             onClick={() => setRange(r.id)}
-            className={`px-4 py-2 rounded-[12px] text-sm font-medium transition ${
+            className={`px-4 py-2 rounded-[12px] text-sm font-semibold transition ${
               range === r.id
-                ? 'bg-[#1B4332] text-white'
-                : 'bg-white border border-[#E8ECE7] text-[#4B5563] hover:bg-[#EDF4EE]'
+                ? 'bg-[#E66A10] text-white'
+                : 'bg-[#1A1A1A] border border-[#2E2E32] text-[#8E8E93] hover:text-white'
             }`}
           >
             {r.label}
@@ -58,27 +59,25 @@ export default function FocusTrendsTab() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-[#6B7280] gap-2">
-          <Loader2 size={18} className="animate-spin" /> Loading trends...
+        <div className="flex items-center justify-center py-16 text-[#8E8E93] gap-2">
+          <Loader2 size={18} className="animate-spin text-[#FF841C]" /> Loading trends...
         </div>
       ) : !data?.has_data ? (
-        <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-12 text-center">
-          <div className="text-5xl mb-3">📈</div>
-          <p className="text-[#1F2937] font-medium">Not enough data yet</p>
-          <p className="text-[#6B7280] text-sm mt-1">
-            Complete more sessions to see your focus trends.
-          </p>
+        <div className="card p-12 text-center">
+          <div className="w-12 h-12 bg-[#232325] border border-[#2E2E32] rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <TrendingUp className="text-[#FF841C]" size={22} />
+          </div>
+          <p className="text-white font-semibold">Not enough data yet</p>
+          <p className="text-[#8E8E93] text-sm mt-1">Complete more sessions to see your focus trends.</p>
         </div>
       ) : (
         <>
-          {/* Daily trend */}
-          <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
-            <h3 className="text-sm font-semibold text-[#1F2937] mb-4 flex items-center gap-2">
-              <TrendingUp size={16} className="text-[#1B4332]" />
-              Daily Focus Trend
+          <div className="card p-6">
+            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+              <TrendingUp size={16} className="text-[#FF841C]" /> Daily Focus Trend
             </h3>
             {data.daily.length === 0 ? (
-              <p className="text-[#9CA3AF] text-sm">No activity in this range.</p>
+              <p className="text-[#8E8E93] text-sm">No activity in this range.</p>
             ) : (
               (() => {
                 const maxSec = Math.max(
@@ -91,25 +90,15 @@ export default function FocusTrendsTab() {
                       const focused = d.focus_seconds || 0;
                       const distracted = d.distraction_seconds || 0;
                       const total = focused + distracted;
-                      const label = new Date(d.date).toLocaleDateString('en-US', {
-                        month: 'short', day: 'numeric',
-                      });
+                      const label = new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                       return (
                         <div key={d.date} className="flex items-center gap-3">
-                          <span className="text-[#6B7280] text-xs w-16">{label}</span>
-                          <div className="flex-1 h-6 bg-[#F8F7F2] rounded-md overflow-hidden flex">
-                            <div
-                              className="bg-[#2E7D32]"
-                              style={{ width: `${(focused / maxSec) * 100}%` }}
-                            />
-                            <div
-                              className="bg-[#D14343]"
-                              style={{ width: `${(distracted / maxSec) * 100}%` }}
-                            />
+                          <span className="text-[#8E8E93] text-xs w-16">{label}</span>
+                          <div className="flex-1 h-5 bg-[#232325] rounded-md overflow-hidden flex">
+                            <div className="bg-[#10B981]" style={{ width: `${(focused / maxSec) * 100}%` }} />
+                            <div className="bg-[#FF841C]" style={{ width: `${(distracted / maxSec) * 100}%` }} />
                           </div>
-                          <span className="text-[#4B5563] text-xs w-14 text-right">
-                            {fmtDuration(total)}
-                          </span>
+                          <span className="text-white text-xs font-semibold w-14 text-right">{fmtDuration(total)}</span>
                         </div>
                       );
                     })}
@@ -119,23 +108,20 @@ export default function FocusTrendsTab() {
             )}
           </div>
 
-          {/* Best time of day */}
           {data.best_time_of_day && (
-            <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
-              <h3 className="text-sm font-semibold text-[#1F2937] mb-4">When You Focus Best</h3>
+            <div className="card p-6">
+              <h3 className="text-sm font-bold text-white mb-4">When You Focus Best</h3>
               <div className="space-y-3">
                 {Object.entries(data.best_time_of_day).map(([slot, pct]) => (
                   <div key={slot} className="flex items-center gap-3">
-                    <span className="text-[#6B7280] text-xs w-28">{SLOT_LABELS[slot] || slot}</span>
-                    <div className="flex-1 h-6 bg-[#F8F7F2] rounded-md overflow-hidden">
+                    <span className="text-[#8E8E93] text-xs w-32">{SLOT_LABELS[slot] || slot}</span>
+                    <div className="flex-1 h-5 bg-[#232325] rounded-md overflow-hidden">
                       <div
-                        className={`h-full rounded-md ${
-                          pct >= 80 ? 'bg-[#2E7D32]' : pct >= 60 ? 'bg-[#D4A64A]' : 'bg-[#D14343]'
-                        }`}
+                        className={`h-full rounded-md ${pct >= 80 ? 'bg-[#10B981]' : pct >= 60 ? 'bg-[#FF841C]' : 'bg-[#EF4444]'}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <span className="text-[#4B5563] text-xs w-10 text-right">{pct}%</span>
+                    <span className="text-white text-xs font-semibold w-10 text-right">{pct}%</span>
                   </div>
                 ))}
               </div>

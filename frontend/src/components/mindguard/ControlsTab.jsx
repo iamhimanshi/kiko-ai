@@ -46,20 +46,19 @@ export default function ControlsTab() {
 
   return (
     <div className="space-y-6">
-      {/* Add form */}
-      <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
+      <div className="card p-6">
         <div className="flex items-center gap-2 mb-1">
-          <Shield size={18} className="text-[#1B4332]" />
-          <h2 className="text-lg font-semibold text-[#1F2937]">Website Blocking</h2>
+          <Shield size={18} className="text-[#FF841C]" />
+          <h2 className="text-lg font-bold text-white">Website Blocking</h2>
         </div>
-        <p className="text-[#6B7280] text-sm mb-5">
+        <p className="text-[#8E8E93] text-sm mb-5">
           Block distracting websites during active study sessions.
         </p>
 
         {error && (
-          <div className="bg-[#FDECEC] border border-[#D14343]/30 text-[#D14343] px-4 py-3 rounded-[14px] mb-4 text-sm flex items-start justify-between">
+          <div className="bg-[#2D1616] border border-[#EF4444]/40 text-[#EF4444] px-4 py-3 rounded-[14px] mb-4 text-sm flex items-start justify-between">
             <span>{error}</span>
-            <button onClick={() => setError('')} className="text-[#D14343]/70 hover:text-[#D14343]">
+            <button type="button" onClick={() => setError('')} className="text-[#EF4444]/70 hover:text-[#EF4444]">
               <X size={14} />
             </button>
           </div>
@@ -71,12 +70,12 @@ export default function ControlsTab() {
             value={newDomain}
             onChange={(e) => setNewDomain(e.target.value)}
             placeholder="e.g. instagram.com"
-            className="flex-1 min-w-[200px] bg-white border border-[#E8ECE7] rounded-[14px] px-4 py-3 text-[#1F2937] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] transition-all text-sm"
+            className="input-field flex-1 min-w-[200px] text-sm"
           />
           <button
             type="submit"
             disabled={adding || !newDomain.trim()}
-            className="bg-[#1B4332] hover:bg-[#24543F] text-white px-5 py-3 rounded-[14px] font-medium transition flex items-center gap-2 disabled:opacity-50"
+            className="btn-primary px-5 py-3 flex items-center gap-2 disabled:opacity-50"
           >
             {adding ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
             Block
@@ -84,40 +83,38 @@ export default function ControlsTab() {
         </form>
       </div>
 
-      {/* List */}
-      <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
+      <div className="card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-[#1F2937]">Blocked Websites</h3>
-          <span className="text-[#6B7280] text-xs">
+          <h3 className="text-sm font-bold text-white">Blocked Websites</h3>
+          <span className="text-[#8E8E93] text-xs font-medium">
             {sites.length} {sites.length === 1 ? 'site' : 'sites'}
           </span>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-8 text-[#6B7280] gap-2">
-            <Loader2 size={16} className="animate-spin" /> Loading...
+          <div className="flex items-center justify-center py-8 text-[#8E8E93] gap-2">
+            <Loader2 size={16} className="animate-spin text-[#FF841C]" /> Loading...
           </div>
         ) : sites.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-[#1F2937] text-sm font-medium">No websites blocked yet</p>
-            <p className="text-[#6B7280] text-xs mt-1">
-              Add a website above to block it during study sessions.
-            </p>
+            <p className="text-white text-sm font-semibold">No websites blocked yet</p>
+            <p className="text-[#8E8E93] text-xs mt-1">Add a website above to block it during study sessions.</p>
           </div>
         ) : (
           <div className="space-y-2">
             {sites.map((s) => (
               <div
                 key={s.id}
-                className="flex items-center justify-between gap-3 p-3 bg-[#F8F7F2] rounded-[12px] hover:bg-[#FDECEC]/40 transition group"
+                className="flex items-center justify-between gap-3 p-3 bg-[#232325] border border-[#2E2E32] rounded-[12px] hover:border-[#EF4444]/40 transition group"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-2 h-2 rounded-full bg-[#D14343] flex-shrink-0" />
-                  <span className="text-[#1F2937] text-sm font-medium truncate">{s.domain}</span>
+                  <div className="w-2 h-2 rounded-full bg-[#EF4444] flex-shrink-0" />
+                  <span className="text-white text-sm font-medium truncate">{s.domain}</span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => handleDelete(s.id)}
-                  className="text-[#9CA3AF] hover:text-[#D14343] p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition"
+                  className="text-[#8E8E93] hover:text-[#EF4444] p-1.5 rounded-lg transition"
                   title="Remove"
                 >
                   <Trash2 size={14} />
@@ -128,15 +125,14 @@ export default function ControlsTab() {
         )}
       </div>
 
-      {/* Info */}
-      <div className="bg-[#FFF8E8] border border-[#D4A64A]/30 rounded-[18px] p-5">
+      <div className="bg-[#261A10] border border-[#FF841C]/35 rounded-[18px] p-5">
         <div className="flex items-start gap-3">
-          <AlertCircle size={18} className="text-[#D4A64A] flex-shrink-0 mt-0.5" />
+          <AlertCircle size={18} className="text-[#FF841C] flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-[#4D3A11] mb-1">How blocking works</p>
-            <p className="text-[#4B5563] text-xs leading-relaxed">
+            <p className="text-sm font-bold text-white mb-1">How blocking works</p>
+            <p className="text-[#D1D5DB] text-xs leading-relaxed">
               Blocked websites are inaccessible while a study session is active.
-              You'll be shown a Focus Screen with the option to return to study.
+              You&apos;ll be shown a Focus Screen with the option to return to study.
               Blocking is automatically disabled when the session ends.
             </p>
           </div>

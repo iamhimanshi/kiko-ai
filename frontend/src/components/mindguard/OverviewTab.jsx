@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { mindguardApi } from '../../services/api';
-import { Loader2, Shield, Clock, Target, TrendingUp, Zap } from 'lucide-react';
+import { Loader2, Shield, Clock, Target, TrendingUp, Zap, Globe } from 'lucide-react';
 
 const STATUS_STYLE = {
-  focused:    { label: 'Focused',    color: '#2E7D32', bg: '#EAF8EC', dot: 'bg-[#2E7D32]' },
-  attention:  { label: 'Attention',  color: '#D97706', bg: '#FFF6E4', dot: 'bg-[#D97706]' },
-  distracted: { label: 'Distracted', color: '#D14343', bg: '#FDECEC', dot: 'bg-[#D14343]' },
-  paused:     { label: 'Paused',     color: '#6B7280', bg: '#F3F4F6', dot: 'bg-[#6B7280]' },
-  idle:       { label: 'Idle',       color: '#6B7280', bg: '#F3F4F6', dot: 'bg-[#6B7280]' },
+  focused:    { label: 'Focused',    color: '#10B981', bg: '#0F2922', dot: 'bg-[#10B981]' },
+  attention:  { label: 'Attention',  color: '#FF841C', bg: '#261A10', dot: 'bg-[#FF841C]' },
+  distracted: { label: 'Distracted', color: '#EF4444', bg: '#2D1616', dot: 'bg-[#EF4444]' },
+  paused:     { label: 'Paused',     color: '#8E8E93', bg: '#232325', dot: 'bg-[#8E8E93]' },
+  idle:       { label: 'Idle',       color: '#8E8E93', bg: '#232325', dot: 'bg-[#8E8E93]' },
 };
 
 export default function OverviewTab() {
@@ -29,20 +29,20 @@ export default function OverviewTab() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16 text-[#6B7280] gap-2">
-        <Loader2 size={18} className="animate-spin" /> Loading...
+      <div className="flex items-center justify-center py-16 text-[#8E8E93] gap-2">
+        <Loader2 size={18} className="animate-spin text-[#FF841C]" /> Loading...
       </div>
     );
   }
 
   if (!data?.has_active_session) {
     return (
-      <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-10 text-center">
-        <div className="w-16 h-16 bg-[#F8F7F2] rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <Shield className="text-[#6B7280]" size={28} />
+      <div className="card p-10 text-center">
+        <div className="w-16 h-16 bg-[#232325] border border-[#2E2E32] rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Shield className="text-[#8E8E93]" size={28} />
         </div>
-        <h3 className="text-xl font-bold text-[#1F2937] mb-2">No Active Session</h3>
-        <p className="text-[#6B7280] text-sm max-w-md mx-auto">
+        <h3 className="text-xl font-bold text-white mb-2">No Active Session</h3>
+        <p className="text-[#8E8E93] text-sm max-w-md mx-auto">
           MindGuard activates automatically when you start a study session.
         </p>
       </div>
@@ -57,86 +57,77 @@ export default function OverviewTab() {
 
   return (
     <div className="space-y-6">
-      {/* Main status card */}
-      <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 overflow-hidden">
-        <div className="bg-gradient-to-br from-[#EEF7F0] to-[#F8F7F2] p-8 text-center border-b border-[#E8ECE7]/50">
+      <div className="card overflow-hidden">
+        <div className="bg-[#232325] p-8 text-center border-b border-[#2E2E32]">
           <div
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4"
             style={{ backgroundColor: st.bg }}
           >
             <div className={`w-2.5 h-2.5 rounded-full ${st.dot} ${data.current_focus_state === 'focused' ? 'animate-pulse' : ''}`} />
-            <span className="text-sm font-medium" style={{ color: st.color }}>
-              {st.label}
-            </span>
+            <span className="text-sm font-semibold" style={{ color: st.color }}>{st.label}</span>
           </div>
-          <h2 className="text-xl font-bold text-[#1F2937] mb-1">
-            {data.extension_connected ? 'You\'re Protected' : 'Monitoring'}
+          <h2 className="text-xl font-bold text-white mb-1">
+            {data.extension_connected ? "You're Protected" : 'Monitoring'}
           </h2>
-          <p className="text-[#6B7280] text-sm">
+          <p className="text-[#8E8E93] text-sm">
             {data.extension_connected
               ? 'MindGuard is actively monitoring your study session.'
               : 'Waiting for browser activity from the extension.'}
           </p>
 
           <div className="mt-5 flex items-center justify-center gap-6 text-sm flex-wrap">
-            <div className="flex items-center gap-2 text-[#4B5563]">
-              <Target size={16} className="text-[#1B4332]" />
-              <span className="font-medium">{data.subject}</span>
+            <div className="flex items-center gap-2 text-[#D1D5DB]">
+              <Target size={16} className="text-[#FF841C]" />
+              <span className="font-semibold">{data.subject}</span>
             </div>
             {remainingMin != null && (
-              <div className="flex items-center gap-2 text-[#4B5563]">
-                <Clock size={16} className="text-[#1B4332]" />
+              <div className="flex items-center gap-2 text-[#D1D5DB]">
+                <Clock size={16} className="text-[#FF841C]" />
                 <span>{remainingMin} min remaining</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-[#E8ECE7]/50">
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-[#2E2E32]">
           <div className="p-5 text-center">
-            <TrendingUp size={16} className="text-[#2E7D32] mx-auto mb-2" />
-            <p className="text-xl font-bold text-[#1F2937]">{focusMin}m</p>
-            <p className="text-[#6B7280] text-xs">Focused</p>
+            <TrendingUp size={16} className="text-[#10B981] mx-auto mb-2" />
+            <p className="text-xl font-extrabold text-white">{focusMin}m</p>
+            <p className="text-[#8E8E93] text-xs">Focused</p>
           </div>
           <div className="p-5 text-center">
-            <Zap size={16} className="text-[#D14343] mx-auto mb-2" />
-            <p className="text-xl font-bold text-[#1F2937]">{distractMin}m</p>
-            <p className="text-[#6B7280] text-xs">Distracted</p>
+            <Zap size={16} className="text-[#EF4444] mx-auto mb-2" />
+            <p className="text-xl font-extrabold text-white">{distractMin}m</p>
+            <p className="text-[#8E8E93] text-xs">Distracted</p>
           </div>
           <div className="p-5 text-center">
-            <Zap size={16} className="text-[#D4A64A] mx-auto mb-2" />
-            <p className="text-xl font-bold text-[#1F2937]">{data.distraction_count}</p>
-            <p className="text-[#6B7280] text-xs">Distractions</p>
+            <Zap size={16} className="text-[#FF841C] mx-auto mb-2" />
+            <p className="text-xl font-extrabold text-white">{data.distraction_count}</p>
+            <p className="text-[#8E8E93] text-xs">Distractions</p>
           </div>
           <div className="p-5 text-center">
-            <Clock size={16} className="text-[#1B4332] mx-auto mb-2" />
-            <p className="text-xl font-bold text-[#1F2937]">{longestMin}m</p>
-            <p className="text-[#6B7280] text-xs">Longest focus</p>
+            <Clock size={16} className="text-white mx-auto mb-2" />
+            <p className="text-xl font-extrabold text-white">{longestMin}m</p>
+            <p className="text-[#8E8E93] text-xs">Longest focus</p>
           </div>
         </div>
       </div>
 
-      {/* Current activity */}
       {data.current_activity && (
-        <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
-          <h3 className="text-sm font-semibold text-[#1F2937] mb-3">Current Activity</h3>
+        <div className="card p-6">
+          <h3 className="text-sm font-bold text-white mb-3">Current Activity</h3>
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-[#EEF7F0] rounded-xl flex items-center justify-center flex-shrink-0">
-              <span className="text-[#1B4332] font-bold text-sm">🌐</span>
+            <div className="w-10 h-10 bg-[#232325] border border-[#2E2E32] rounded-xl flex items-center justify-center flex-shrink-0">
+              <Globe size={18} className="text-[#FF841C]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[#1F2937] font-medium text-sm truncate">
-                {data.current_activity.domain}
-              </p>
+              <p className="text-white font-semibold text-sm truncate">{data.current_activity.domain}</p>
               {data.current_activity.page_title && (
-                <p className="text-[#6B7280] text-xs mt-0.5 truncate">
-                  "{data.current_activity.page_title}"
+                <p className="text-[#D1D5DB] text-xs mt-0.5 truncate">
+                  &quot;{data.current_activity.page_title}&quot;
                 </p>
               )}
-              <p className="text-[#6B7280] text-xs mt-1">
-                {data.current_activity.reason}
-              </p>
+              <p className="text-[#8E8E93] text-xs mt-1">{data.current_activity.reason}</p>
             </div>
           </div>
         </div>

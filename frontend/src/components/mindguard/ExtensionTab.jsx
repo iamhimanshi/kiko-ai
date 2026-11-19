@@ -23,79 +23,78 @@ export default function ExtensionTab() {
 
   return (
     <div className="space-y-6">
-      {/* Connection card */}
-      <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-8">
+      <div className="card p-8">
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 bg-[#EEF7F0] rounded-2xl flex items-center justify-center flex-shrink-0">
-            <Chrome className="text-[#1B4332]" size={26} />
+          <div className="w-14 h-14 bg-[#232325] border border-[#2E2E32] rounded-2xl flex items-center justify-center flex-shrink-0">
+            <Chrome className="text-[#FF841C]" size={26} />
           </div>
           <div className="flex-1">
-            <h2 className="text-xl font-bold text-[#1F2937] mb-1">KIKO AI Chrome Extension</h2>
-            <p className="text-[#6B7280] text-sm mb-4">
+            <h2 className="text-xl font-bold text-white mb-1">DayDive Chrome Extension</h2>
+            <p className="text-[#8E8E93] text-sm mb-4">
               Monitor your browser activity while you study.
             </p>
 
             {loading && !data ? (
-              <div className="flex items-center gap-2 text-[#6B7280] text-sm">
-                <Loader2 size={14} className="animate-spin" /> Checking status...
+              <div className="flex items-center gap-2 text-[#8E8E93] text-sm">
+                <Loader2 size={14} className="animate-spin text-[#FF841C]" /> Checking status...
               </div>
             ) : data?.connected ? (
-              <div className="flex items-center gap-2 bg-[#EAF8EC] text-[#2E7D32] px-3 py-2 rounded-full text-sm font-medium w-fit">
-                <div className="w-2 h-2 rounded-full bg-[#2E7D32] animate-pulse" />
+              <div className="flex items-center gap-2 bg-[#0F2922] border border-[#10B981]/30 text-[#10B981] px-3.5 py-2 rounded-full text-sm font-semibold w-fit">
+                <div className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
                 Connected
               </div>
             ) : (
-              <div className="flex items-center gap-2 bg-[#FDECEC] text-[#D14343] px-3 py-2 rounded-full text-sm font-medium w-fit">
-                <div className="w-2 h-2 rounded-full bg-[#D14343]" />
+              <div className="flex items-center gap-2 bg-[#2D1616] border border-[#EF4444]/30 text-[#EF4444] px-3.5 py-2 rounded-full text-sm font-semibold w-fit">
+                <div className="w-2 h-2 rounded-full bg-[#EF4444]" />
                 Not Connected
               </div>
             )}
           </div>
           <button
+            type="button"
             onClick={load}
-            className="text-[#6B7280] hover:text-[#1B4332] p-2 rounded-lg transition"
+            className="text-[#8E8E93] hover:text-white p-2 rounded-lg transition"
             title="Refresh"
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={16} className={loading ? 'animate-spin text-[#FF841C]' : ''} />
           </button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-[#E8ECE7]/50">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-[#2E2E32]">
           <div>
-            <p className="text-[#9CA3AF] text-xs uppercase tracking-wider font-medium mb-1">Version</p>
-            <p className="text-[#1F2937] text-sm font-medium">{data?.version || '—'}</p>
+            <p className="text-[#8E8E93] text-xs uppercase tracking-wider font-bold mb-1">Version</p>
+            <p className="text-white text-sm font-semibold">{data?.version || '—'}</p>
           </div>
           <div>
-            <p className="text-[#9CA3AF] text-xs uppercase tracking-wider font-medium mb-1">Session</p>
-            <p className="text-[#1F2937] text-sm font-medium">
+            <p className="text-[#8E8E93] text-xs uppercase tracking-wider font-bold mb-1">Session</p>
+            <p className="text-white text-sm font-semibold">
               {data?.active_session_id ? `#${data.active_session_id}` : 'No active session'}
             </p>
           </div>
           <div>
-            <p className="text-[#9CA3AF] text-xs uppercase tracking-wider font-medium mb-1">Last seen</p>
-            <p className="text-[#1F2937] text-sm font-medium">
+            <p className="text-[#8E8E93] text-xs uppercase tracking-wider font-bold mb-1">Last seen</p>
+            <p className="text-white text-sm font-semibold">
               {data?.last_seen_at ? new Date(data.last_seen_at).toLocaleTimeString() : '—'}
             </p>
           </div>
         </div>
       </div>
 
-      {/* How to install */}
-      <div className="bg-white rounded-[18px] shadow-[0px_4px_12px_rgba(16,24,40,0.06)] border border-[#E8ECE7]/30 p-6">
-        <h3 className="text-sm font-semibold text-[#1F2937] mb-4 flex items-center gap-2">
-          <Chrome size={16} className="text-[#1B4332]" />
+      <div className="card p-6">
+        <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <Chrome size={16} className="text-[#FF841C]" />
           Installation
         </h3>
-        <ol className="space-y-3 text-sm text-[#4B5563]">
+        <ol className="space-y-3 text-sm text-[#D1D5DB]">
           {[
             'Open Chrome and go to chrome://extensions',
             'Enable Developer mode (top-right toggle)',
             'Click "Load unpacked" and select the extension/ folder',
-            'Sign in to the extension with your KIKO account',
+            'Sign in to the extension with your DayDive account',
             'Start a study session — MindGuard activates automatically',
           ].map((step, i) => (
             <li key={i} className="flex items-start gap-3">
-              <span className="w-6 h-6 bg-[#EEF7F0] text-[#1B4332] rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+              <span className="w-6 h-6 bg-[#232325] border border-[#2E2E32] text-[#FF841C] rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
                 {i + 1}
               </span>
               <span>{step}</span>
@@ -104,32 +103,31 @@ export default function ExtensionTab() {
         </ol>
       </div>
 
-      {/* Privacy */}
-      <div className="bg-[#FFF8E8] border border-[#D4A64A]/30 rounded-[18px] p-6">
+      <div className="bg-[#261A10] border border-[#FF841C]/35 rounded-[18px] p-6">
         <div className="flex items-start gap-3">
-          <Shield className="text-[#D4A64A] flex-shrink-0 mt-0.5" size={20} />
+          <Shield className="text-[#FF841C] flex-shrink-0 mt-0.5" size={20} />
           <div>
-            <h3 className="text-sm font-semibold text-[#4D3A11] mb-3">Your Privacy</h3>
-            <p className="text-[#4B5563] text-sm mb-4">
+            <h3 className="text-sm font-bold text-white mb-2">Your Privacy</h3>
+            <p className="text-[#D1D5DB] text-sm mb-4">
               MindGuard only monitors browser activity while a Study Session is active.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-[#2E7D32] font-medium mb-2">KIKO uses:</p>
-                <ul className="space-y-1 text-[#4B5563] text-xs">
-                  <li className="flex items-center gap-2"><Check size={12} className="text-[#2E7D32]" /> Website / domain</li>
-                  <li className="flex items-center gap-2"><Check size={12} className="text-[#2E7D32]" /> Page title</li>
-                  <li className="flex items-center gap-2"><Check size={12} className="text-[#2E7D32]" /> Activity duration</li>
-                  <li className="flex items-center gap-2"><Check size={12} className="text-[#2E7D32]" /> Tab changes</li>
+                <p className="text-[#10B981] font-semibold mb-2">DayDive uses:</p>
+                <ul className="space-y-1 text-[#D1D5DB] text-xs">
+                  <li className="flex items-center gap-2"><Check size={12} className="text-[#10B981]" /> Website / domain</li>
+                  <li className="flex items-center gap-2"><Check size={12} className="text-[#10B981]" /> Page title</li>
+                  <li className="flex items-center gap-2"><Check size={12} className="text-[#10B981]" /> Activity duration</li>
+                  <li className="flex items-center gap-2"><Check size={12} className="text-[#10B981]" /> Tab changes</li>
                 </ul>
               </div>
               <div>
-                <p className="text-[#D14343] font-medium mb-2">KIKO never collects:</p>
-                <ul className="space-y-1 text-[#4B5563] text-xs">
-                  <li className="flex items-center gap-2"><X size={12} className="text-[#D14343]" /> Passwords</li>
-                  <li className="flex items-center gap-2"><X size={12} className="text-[#D14343]" /> Form contents</li>
-                  <li className="flex items-center gap-2"><X size={12} className="text-[#D14343]" /> Keystrokes</li>
-                  <li className="flex items-center gap-2"><X size={12} className="text-[#D14343]" /> Personal messages</li>
+                <p className="text-[#EF4444] font-semibold mb-2">DayDive never collects:</p>
+                <ul className="space-y-1 text-[#D1D5DB] text-xs">
+                  <li className="flex items-center gap-2"><X size={12} className="text-[#EF4444]" /> Passwords</li>
+                  <li className="flex items-center gap-2"><X size={12} className="text-[#EF4444]" /> Form contents</li>
+                  <li className="flex items-center gap-2"><X size={12} className="text-[#EF4444]" /> Keystrokes</li>
+                  <li className="flex items-center gap-2"><X size={12} className="text-[#EF4444]" /> Personal messages</li>
                 </ul>
               </div>
             </div>
